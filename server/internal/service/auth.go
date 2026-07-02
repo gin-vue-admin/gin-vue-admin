@@ -92,10 +92,10 @@ func (s *AuthService) Seed(ctx context.Context) error {
 	}
 
 	// 2. 角色（带权限关联）
-	if err := s.seedRole(ctx, "super_admin", "超级管理员", []model.Permission{permAll}); err != nil {
+	if err := s.seedRole(ctx, "super_admin", "超级管理员", "超级管理员，拥有所有权限", []model.Permission{permAll}); err != nil {
 		return err
 	}
-	if err := s.seedRole(ctx, "user", "普通用户", []model.Permission{permUserRead}); err != nil {
+	if err := s.seedRole(ctx, "user", "普通用户", "普通用户，仅查看权限", []model.Permission{permUserRead}); err != nil {
 		return err
 	}
 
@@ -115,9 +115,13 @@ func firstOrCreatePerm(ctx context.Context, db *gorm.DB, p *model.Permission) er
 }
 
 // seedRole 按 code 查/建角色，并补齐角色-权限关联（Replace 去重）。
-func (s *AuthService) seedRole(ctx context.Context, code, name string, perms []model.Permission) error {
-	role := model.Role{Code: code, Name: name, Status: "active"}
+func (s *AuthService) seedRole(ctx context.Context, code, name, description string, perms []model.Permission) error {
+	role := model.Role{Code: code, Name: name, Description: description, Status: "active"}
 	if err := s.db.WithContext(ctx).Where(model.Role{Code: code}).FirstOrCreate(&role).Error; err != nil {
+		return err
+	}
+	// 已存在角色补 Description（FirstOrCreate 不覆盖已存在记录的字段）
+	if err := s.db.WithContext(ctx).Model(&role).Update("description", description).Error; err != nil {
 		return err
 	}
 	// 关联权限：Replace 法（覆盖式，幂等去重，多次 Seed 不会重复关联）。

@@ -53,8 +53,13 @@ func main() {
 	permSvc := service.NewPermissionService(permRepo)
 	permHandler := handler.NewPermissionHandler(permSvc)
 
+	// M3.2: 角色模块组装（repo → service → handler 构造注入）
+	roleRepo := repository.NewRoleRepository(gdb)
+	roleSvc := service.NewRoleService(roleRepo)
+	roleHandler := handler.NewRoleHandler(roleSvc)
+
 	authHandler := handler.NewAuthHandler(authSvc)
-	r := server.NewRouter(authHandler, permHandler, permRepo, jwtMgr)
+	r := server.NewRouter(authHandler, permHandler, roleHandler, permRepo, jwtMgr)
 
 	// 5. 启动 HTTP 服务
 	addr := ":" + strconv.Itoa(cfg.Server.Port)

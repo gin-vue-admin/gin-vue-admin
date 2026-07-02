@@ -32,6 +32,7 @@ type Role struct {
 	Model
 	Code        string         `gorm:"uniqueIndex;size:64;not null" json:"code"`
 	Name        string         `gorm:"size:64;not null" json:"name"`
+	Description string         `gorm:"size:255" json:"description"`   // 新增：对齐前端 RoleInfo
 	Status      string         `gorm:"size:16;default:active" json:"status"`
 	Sort        int            `gorm:"default:0" json:"sort"`
 	Remark      string         `gorm:"size:255" json:"remark"`

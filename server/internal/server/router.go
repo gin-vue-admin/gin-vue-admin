@@ -11,7 +11,7 @@ import (
 
 // NewRouter 装配全局中间件与路由。
 // permRepo 传入路由层仅用于 RequirePermission 中间件（按 userID 查权限码集合）。
-func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.PermissionHandler, permRepo repository.PermissionRepository, jwtMgr *jwt.Manager) *gin.Engine {
+func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.PermissionHandler, roleHandler *handler.RoleHandler, permRepo repository.PermissionRepository, jwtMgr *jwt.Manager) *gin.Engine {
 	r := gin.New()
 	r.HandleMethodNotAllowed = true
 	r.Use(
@@ -58,7 +58,24 @@ func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.Permission
 			perm.DELETE("", middleware.RequirePermission(permRepo, "permission:delete"), permHandler.BatchDelete)
 		}
 
-		// TODO(M3): /api/user /api/role
+		// 角色管理
+		role := api.Group("/role")
+		role.Use(middleware.AuthRequired(jwtMgr))
+		{
+			// 路由顺序：/export、/:id/permissions 必须在 /:id 前注册，
+			// 确保 Gin 树形路由按静态/子路径优先匹配（避免被 /:id 抢占）。
+			role.GET("/export", middleware.RequirePermission(permRepo, "role:list"), roleHandler.Export)
+			role.GET("/:id/permissions", middleware.RequirePermission(permRepo, "role:permission"), roleHandler.GetPermissions)
+			role.PUT("/:id/permissions", middleware.RequirePermission(permRepo, "role:permission"), roleHandler.SetPermissions)
+			role.GET("", middleware.RequirePermission(permRepo, "role:list"), roleHandler.List)
+			role.GET("/:id", middleware.RequirePermission(permRepo, "role:list"), roleHandler.Get)
+			role.POST("", middleware.RequirePermission(permRepo, "role:create"), roleHandler.Create)
+			role.PUT("/:id", middleware.RequirePermission(permRepo, "role:edit"), roleHandler.Update)
+			role.DELETE("/:id", middleware.RequirePermission(permRepo, "role:delete"), roleHandler.Delete)
+			role.DELETE("", middleware.RequirePermission(permRepo, "role:delete"), roleHandler.BatchDelete)
+		}
+
+		// TODO(M3): /api/user
 		// TODO(M4): /api/system/menus
 	}
 
