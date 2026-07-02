@@ -1,0 +1,29 @@
+# ===== Go (server/) =====
+server/bin/
+server/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+*.log
+# 本地覆盖配置（不提交密钥/密码）
+server/configs/*.local.yaml
+server/configs/local/
+
+# ===== IDE / OS =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ===== 部署产物 =====
+deploy/data/
+deploy/dist/
+
+# ===== 前端（web 为 submodule，内部自带 .gitignore；此处仅兜底）=====
+web/node_modules/
+web/dist/
