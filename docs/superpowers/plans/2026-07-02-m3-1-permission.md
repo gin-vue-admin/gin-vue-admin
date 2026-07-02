@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- 工作目录基准：所有 go 命令在 `server/` 下（`cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && ...`）。
+- 工作目录基准：所有 go 命令在 `server/` 下（`cd server && ...`）。
 - MySQL 容器 gva-mysql:13306（root/root/gva）已运行；后端端口 8088。
 - 代码注释中文，与现有一致。
 - **不主动执行 git 提交/建分支**（用户规范）——commit 步骤改为"准备提交，等用户确认"。
@@ -68,13 +68,13 @@ import 已有 `"time"`，无需改。
 
 - [ ] **Step 2: 编译 + M2 回归测试**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go build ./... && go test ./internal/service/... -count=1`
+Run: `cd server && go build ./... && go test ./internal/service/... -count=1`
 Expected: build 退出码 0；M2 service 测试全 PASS（base.Model tag 改动不应破坏 service 层逻辑，因 service 测试断言不含时间字段序列化）。
 
 - [ ] **Step 3: 准备提交（等用户确认）**
 
 ```bash
-cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server
+cd server
 git add internal/model/base.go
 git commit -m "refactor(model): base.Model 时间字段 JSON tag 对齐前端契约"
 ```
@@ -112,7 +112,7 @@ type Permission struct {
 
 - [ ] **Step 2: 编译验证**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go build ./...`
+Run: `cd server && go build ./...`
 Expected: 退出码 0。
 
 - [ ] **Step 3: 准备提交（等用户确认）**
@@ -187,7 +187,7 @@ func newAuthSvc(t *testing.T) (*AuthService, *gorm.DB) {
 
 - [ ] **Step 3: 跑 M2 测试确认 testutil 提取无回归**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/service/... -count=1`
+Run: `cd server && go test ./internal/service/... -count=1`
 Expected: M2 全部测试 PASS（Seed/Login/Refresh/Profile/Logout）。
 
 - [ ] **Step 4: 写 Seed 20 权限的失败测试**
@@ -223,7 +223,7 @@ var seedPermissionCodes = []string{
 
 - [ ] **Step 5: 跑测试确认 RED**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/service/... -run TestSeed_Idempotent -v`
+Run: `cd server && go test ./internal/service/... -run TestSeed_Idempotent -v`
 Expected: FAIL（`perms` 仍只有 2 个，断言 `Len 25` 失败）。
 
 - [ ] **Step 6: 扩展 Seed 种 20 权限**
@@ -266,12 +266,12 @@ func moduleOf(code string) string {
 
 - [ ] **Step 7: 跑测试确认 GREEN**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/service/... -run TestSeed_Idempotent -v`
+Run: `cd server && go test ./internal/service/... -run TestSeed_Idempotent -v`
 Expected: PASS。
 
 - [ ] **Step 8: 全包回归**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./... -count=1`
+Run: `cd server && go test ./... -count=1`
 Expected: 全 PASS。
 
 - [ ] **Step 9: 准备提交（等用户确认）**
@@ -370,7 +370,7 @@ func TestPaginate_Keyword(t *testing.T) {
 
 - [ ] **Step 2: 跑测试确认 RED**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/pkg/pagination/... -v`
+Run: `cd server && go test ./internal/pkg/pagination/... -v`
 Expected: 编译失败（pagination 包未定义）。
 
 - [ ] **Step 3: 实现 pagination.go**
@@ -438,7 +438,7 @@ func Paginate[T any](db *gorm.DB, q Query, build func(*gorm.DB) *gorm.DB) (Resul
 
 - [ ] **Step 4: 跑测试确认 GREEN**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/pkg/pagination/... -v`
+Run: `cd server && go test ./internal/pkg/pagination/... -v`
 Expected: 3 个测试 PASS。
 
 - [ ] **Step 5: 准备提交（等用户确认）**
@@ -493,7 +493,7 @@ func TestBuild_Empty(t *testing.T) {
 
 - [ ] **Step 2: 跑测试确认 RED**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/pkg/csvutil/... -v`
+Run: `cd server && go test ./internal/pkg/csvutil/... -v`
 Expected: 编译失败。
 
 - [ ] **Step 3: 实现 csvutil.go**
@@ -550,7 +550,7 @@ func toStr(v any) string {
 
 - [ ] **Step 4: 跑测试确认 GREEN**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/pkg/csvutil/... -v`
+Run: `cd server && go test ./internal/pkg/csvutil/... -v`
 Expected: 2 测试 PASS。
 
 - [ ] **Step 5: 准备提交（等用户确认）**
@@ -669,7 +669,7 @@ func TestPermissionRepo_BatchDelete(t *testing.T) {
 
 - [ ] **Step 2: 跑测试确认 RED**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/repository/... -v`
+Run: `cd server && go test ./internal/repository/... -v`
 Expected: 编译失败（NewPermissionRepository 未定义）。
 
 - [ ] **Step 3: 实现 permission.go**
@@ -785,7 +785,7 @@ func (r *permissionRepository) GetUserPermissionCodes(ctx context.Context, userI
 
 - [ ] **Step 4: 跑测试确认 GREEN**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/repository/... -v`
+Run: `cd server && go test ./internal/repository/... -v`
 Expected: 4 测试 PASS。
 
 - [ ] **Step 5: 准备提交（等用户确认）**
@@ -925,7 +925,7 @@ func TestPermService_Export(t *testing.T) {
 
 - [ ] **Step 2: 跑测试确认 RED**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/service/ -run TestPermService -v`
+Run: `cd server && go test ./internal/service/ -run TestPermService -v`
 Expected: 编译失败（PermissionService 未定义）。
 
 - [ ] **Step 3: 实现 permission.go**
@@ -1076,7 +1076,7 @@ import 加 `"strconv"`。
 
 - [ ] **Step 4: 跑测试确认 GREEN**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/service/ -run TestPermService -v`
+Run: `cd server && go test ./internal/service/ -run TestPermService -v`
 Expected: 7 测试 PASS。
 
 - [ ] **Step 5: 准备提交（等用户确认）**
@@ -1182,7 +1182,7 @@ func TestPermissionReader_Interface(t *testing.T) {
 
 - [ ] **Step 2: 跑测试确认 RED**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/middleware/ -run TestRequire -v`
+Run: `cd server && go test ./internal/middleware/ -run TestRequire -v`
 Expected: 编译失败（RequirePermission 未定义）。
 
 - [ ] **Step 3: 实现 permission.go**
@@ -1306,7 +1306,7 @@ func InvalidateAll() {
 
 - [ ] **Step 4: 跑测试确认 GREEN**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./internal/middleware/ -run "TestRequire|TestPermissionReader" -v`
+Run: `cd server && go test ./internal/middleware/ -run "TestRequire|TestPermissionReader" -v`
 Expected: 5 测试 PASS。
 
 - [ ] **Step 5: 准备提交（等用户确认）**
@@ -1543,14 +1543,14 @@ func (h *PermissionHandler) BatchDelete(c *gin.Context) {
 
 - [ ] **Step 4: 编译验证**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go build ./...`
+Run: `cd server && go build ./...`
 Expected: 退出码 0。
 
 - [ ] **Step 5: 端到端验收**
 
 启动服务并验收（用 admin/123456 登录拿 token）：
 ```bash
-cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server
+cd server
 go run cmd/api/main.go > /tmp/gva-m3.log 2>&1 &
 sleep 5
 # 登录
@@ -1586,7 +1586,7 @@ pkill -f "cmd/api/main.go"; pkill -f "exe/main" 2>/dev/null; echo done
 
 - [ ] **Step 7: 全包测试回归**
 
-Run: `cd /Users/wangtao/data/github.com/gin-vue-admin/gin-vue-admin/server && go test ./... -count=1`
+Run: `cd server && go test ./... -count=1`
 Expected: 全 PASS（M2 + M3.1 所有测试）。
 
 - [ ] **Step 8: 准备提交（等用户确认）**
