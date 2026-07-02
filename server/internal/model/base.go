@@ -4,8 +4,9 @@ package model
 import "time"
 
 // Model 公共基础字段（不含软删除，按需在各实体追加 DeletedAt）。
+// JSON tag 对齐前端契约：id/createTime/updateTime。
 type Model struct {
-	ID        uint `gorm:"primaryKey"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time `json:"createTime"`
+	UpdatedAt time.Time `json:"updateTime"`
 }

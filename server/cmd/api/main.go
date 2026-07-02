@@ -48,8 +48,13 @@ func main() {
 	}
 	log.L.Info("种子数据就绪")
 
+	// M3.1: 权限模块组装
+	permRepo := repository.NewPermissionRepository(gdb)
+	permSvc := service.NewPermissionService(permRepo)
+	permHandler := handler.NewPermissionHandler(permSvc)
+
 	authHandler := handler.NewAuthHandler(authSvc)
-	r := server.NewRouter(authHandler, jwtMgr)
+	r := server.NewRouter(authHandler, permHandler, permRepo, jwtMgr)
 
 	// 5. 启动 HTTP 服务
 	addr := ":" + strconv.Itoa(cfg.Server.Port)

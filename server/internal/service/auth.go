@@ -60,6 +60,17 @@ var seedNormal = struct {
 	username: "user", password: "123456", nickname: "User",
 }
 
+// seedPermissionCodes M3.1 种入的权限码（对齐前端 mock permissionCodes）。
+// 共 23 个：system/user/role/permission/dict/config 六模块。
+var seedPermissionCodes = []string{
+	"system:setting", "system:log", "system:operation",
+	"user:list", "user:create", "user:edit", "user:delete",
+	"role:list", "role:create", "role:edit", "role:delete", "role:permission",
+	"permission:list", "permission:create", "permission:edit", "permission:delete",
+	"dict:list", "dict:create", "dict:edit", "dict:delete",
+	"config:system", "config:parameter", "config:email",
+}
+
 // Seed 幂等种入权限/角色/账户。用 FirstOrCreate，已有数据不清不删。
 func (s *AuthService) Seed(ctx context.Context) error {
 	// 1. 权限
@@ -70,6 +81,14 @@ func (s *AuthService) Seed(ctx context.Context) error {
 	permUserRead := model.Permission{Code: "user:read", Name: "用户查看", Type: "api"}
 	if err := firstOrCreatePerm(ctx, s.db, &permUserRead); err != nil {
 		return err
+	}
+
+	// M3.1: 批量种入权限定义（不分配给角色，M3.2 处理 role-permission 分配）
+	for _, code := range seedPermissionCodes {
+		p := model.Permission{Code: code, Name: code, Type: "api", Module: moduleOf(code), Status: "active"}
+		if err := firstOrCreatePerm(ctx, s.db, &p); err != nil {
+			return err
+		}
 	}
 
 	// 2. 角色（带权限关联）
@@ -249,4 +268,14 @@ func (s *AuthService) GetProfile(ctx context.Context, userID uint) (*UserProfile
 // Logout 纯 JWT 模式下为空操作（token 不落库，前端清本地 storage）。
 func (s *AuthService) Logout(ctx context.Context) error {
 	return nil
+}
+
+// moduleOf 从权限码推断模块（code 形如 "user:list" → "user"）。
+func moduleOf(code string) string {
+	for i := 0; i < len(code); i++ {
+		if code[i] == ':' {
+			return code[:i]
+		}
+	}
+	return code
 }

@@ -65,6 +65,11 @@ func Conflict(detail string) *Error {
 	return &Error{Status: 409, Code: "CONFLICT", Title: "Conflict", Detail: detail}
 }
 
+// Validation 422 校验失败（请求体字段不合规）。
+func Validation(detail string, errs map[string][]string) *Error {
+	return &Error{Status: 422, Code: "VALIDATION_ERROR", Title: "Unprocessable Entity", Detail: detail, Errors: errs}
+}
+
 // As 包装 errors.As，便于外部判断。
 func As(err error) (*Error, bool) {
 	var e *Error

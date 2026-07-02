@@ -43,13 +43,18 @@ type Role struct {
 func (Role) TableName() string { return "roles" }
 
 // Permission 权限实体。code 如 user:read；super_admin 持有通配 *。
+// Module/Description/Status 对齐前端 PermissionInfo 契约；DeletedAt 软删除。
 type Permission struct {
 	Model
-	Code     string `gorm:"uniqueIndex;size:128;not null" json:"code"`
-	Name     string `gorm:"size:64;not null" json:"name"`
-	Type     string `gorm:"size:16" json:"type"` // menu | button | api
-	ParentID uint   `gorm:"index;default:0" json:"parentId"`
-	Sort     int    `gorm:"default:0" json:"sort"`
+	Code        string         `gorm:"uniqueIndex;size:128;not null" json:"code"`
+	Name        string         `gorm:"size:64;not null" json:"name"`
+	Type        string         `gorm:"size:16" json:"type"` // menu | button | api
+	Module      string         `gorm:"size:32;index" json:"module"`
+	Description string         `gorm:"size:255" json:"description"`
+	Status      string         `gorm:"size:16;default:active" json:"status"` // active | inactive
+	ParentID    uint           `gorm:"index;default:0" json:"parentId"`
+	Sort        int            `gorm:"default:0" json:"sort"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (Permission) TableName() string { return "permissions" }

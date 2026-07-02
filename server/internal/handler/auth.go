@@ -37,7 +37,7 @@ func NewAuthHandler(svc *service.AuthService) *AuthHandler {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		apperr.Write(c, apperr.BadRequest("VALIDATION_ERROR", err.Error()))
+		apperr.Write(c, apperr.Validation(err.Error(), nil))
 		return
 	}
 	res, err := h.svc.Login(c.Request.Context(), req.Username, req.Password)
@@ -52,7 +52,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		apperr.Write(c, apperr.BadRequest("VALIDATION_ERROR", err.Error()))
+		apperr.Write(c, apperr.Validation(err.Error(), nil))
 		return
 	}
 	res, err := h.svc.Refresh(c.Request.Context(), req.RefreshToken)

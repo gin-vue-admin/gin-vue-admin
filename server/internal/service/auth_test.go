@@ -3,12 +3,10 @@ package service
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gva/internal/config"
 	"gva/internal/model"
@@ -16,22 +14,12 @@ import (
 	"gva/internal/pkg/async"
 	"gva/internal/pkg/jwt"
 	"gva/internal/repository"
+	"gva/internal/testutil"
 )
-
-// newTestDB 用 SQLite 建表，隔离真实 MySQL。
-// 每个测试用独立临时文件库，彻底隔离，避免 cache=shared 共享内存库导致测试串数据。
-func newTestDB(t *testing.T) *gorm.DB {
-	t.Helper()
-	dsn := filepath.Join(t.TempDir(), "test.db")
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-	require.NoError(t, err)
-	require.NoError(t, model.AutoMigrate(db))
-	return db
-}
 
 func newAuthSvc(t *testing.T) (*AuthService, *gorm.DB) {
 	t.Helper()
-	db := newTestDB(t)
+	db := testutil.NewTestDB(t)
 	repo := repository.NewUserRepository(db)
 	jwtMgr := jwt.NewManager(config.JWTConfig{
 		Secret: "test-secret", AccessTTL: 3600, RefreshTTL: 604800, Issuer: "gva-test",
@@ -40,7 +28,7 @@ func newAuthSvc(t *testing.T) (*AuthService, *gorm.DB) {
 }
 
 // TestSeed_Idempotent 验证 Seed 幂等：调两次不报错、不重复，
-// 最终库里有 2 用户、2 角色、2 权限。
+// 最终库里有 2 用户、2 角色、25 权限（M2 的 2 + M3.1 的 23）。
 func TestSeed_Idempotent(t *testing.T) {
 	svc, db := newAuthSvc(t)
 	ctx := context.Background()
@@ -56,10 +44,18 @@ func TestSeed_Idempotent(t *testing.T) {
 	var roles []model.Role
 	db.Find(&roles)
 	assert.Len(t, roles, 2)
-	// 权限
+	// 权限：M2 的 2 个（*, user:read）+ M3.1 的 23 个
 	var perms []model.Permission
 	db.Find(&perms)
-	assert.Len(t, perms, 2)
+	assert.Len(t, perms, 2+len(seedPermissionCodes))
+	// 校验 M3.1 权限码全部存在
+	codes := make(map[string]bool)
+	for _, p := range perms {
+		codes[p.Code] = true
+	}
+	for _, c := range seedPermissionCodes {
+		assert.True(t, codes[c], "缺少种子权限码 %s", c)
+	}
 }
 
 // setupSeeded 构造一个已 Seed 过的 AuthService，供 Login 测试复用。
