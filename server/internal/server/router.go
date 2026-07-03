@@ -11,7 +11,7 @@ import (
 
 // NewRouter 装配全局中间件与路由。
 // permRepo 传入路由层仅用于 RequirePermission 中间件（按 userID 查权限码集合）。
-func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.PermissionHandler, roleHandler *handler.RoleHandler, permRepo repository.PermissionRepository, jwtMgr *jwt.Manager) *gin.Engine {
+func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.PermissionHandler, roleHandler *handler.RoleHandler, userHandler *handler.UserHandler, permRepo repository.PermissionRepository, jwtMgr *jwt.Manager) *gin.Engine {
 	r := gin.New()
 	r.HandleMethodNotAllowed = true
 	r.Use(
@@ -75,7 +75,20 @@ func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.Permission
 			role.DELETE("", middleware.RequirePermission(permRepo, "role:delete"), roleHandler.BatchDelete)
 		}
 
-		// TODO(M3): /api/user
+		// 用户管理
+		user := api.Group("/user")
+		user.Use(middleware.AuthRequired(jwtMgr))
+		{
+			// 路由顺序：/export 必须在 /:id 前注册，确保 Gin 树形路由按静态路径优先匹配。
+			user.GET("/export", middleware.RequirePermission(permRepo, "user:list"), userHandler.Export)
+			user.GET("", middleware.RequirePermission(permRepo, "user:list"), userHandler.List)
+			user.GET("/:id", middleware.RequirePermission(permRepo, "user:list"), userHandler.Get)
+			user.POST("", middleware.RequirePermission(permRepo, "user:create"), userHandler.Create)
+			user.PUT("/:id", middleware.RequirePermission(permRepo, "user:edit"), userHandler.Update)
+			user.DELETE("/:id", middleware.RequirePermission(permRepo, "user:delete"), userHandler.Delete)
+			user.DELETE("", middleware.RequirePermission(permRepo, "user:delete"), userHandler.BatchDelete)
+		}
+
 		// TODO(M4): /api/system/menus
 	}
 

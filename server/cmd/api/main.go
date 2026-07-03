@@ -58,8 +58,12 @@ func main() {
 	roleSvc := service.NewRoleService(roleRepo)
 	roleHandler := handler.NewRoleHandler(roleSvc)
 
+	// M3.3: 用户模块组装（userRepo 复用 M2 已建，再 service → handler）
+	userSvc := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userSvc)
+
 	authHandler := handler.NewAuthHandler(authSvc)
-	r := server.NewRouter(authHandler, permHandler, roleHandler, permRepo, jwtMgr)
+	r := server.NewRouter(authHandler, permHandler, roleHandler, userHandler, permRepo, jwtMgr)
 
 	// 5. 启动 HTTP 服务
 	addr := ":" + strconv.Itoa(cfg.Server.Port)
