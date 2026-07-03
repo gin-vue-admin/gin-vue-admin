@@ -9,7 +9,10 @@ ARG REGISTRY=docker.io/library
 FROM ${REGISTRY}/golang:1.25-alpine AS builder
 
 # CGO 禁用 + 静态链接，适配 alpine（无 glibc）
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+# GOPROXY 可配：受限网络用 https://goproxy.cn（构建参数 GOPROXY 覆盖）
+# GOARCH 不硬编码：用构建机架构，避免交叉编译 OOM；多架构部署用 buildx --platform
+ARG GOPROXY=https://goproxy.cn
+ENV CGO_ENABLED=0 GOOS=linux GOPROXY=${GOPROXY}
 
 WORKDIR /build
 
@@ -17,9 +20,9 @@ WORKDIR /build
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 
-# 拷源码并编译
+# 拷源码并编译。-p 1 限制并行包编译，降低内存峰值（避免受限内存环境 OOM）
 COPY server/ ./
-RUN go build -ldflags="-s -w" -o /out/api ./cmd/api
+RUN go build -p 1 -ldflags="-s -w" -o /out/api ./cmd/api
 
 # ---------- 运行阶段 ----------
 FROM ${REGISTRY}/alpine:3.20

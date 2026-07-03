@@ -10,7 +10,9 @@ FROM ${REGISTRY}/node:22-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@10 --activate
 WORKDIR /build
 COPY web/package.json web/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# npm 镜像源可配：受限网络用 https://registry.npmmirror.com
+ARG NPM_REGISTRY=https://registry.npmjs.org
+RUN pnpm config set registry ${NPM_REGISTRY} && pnpm install --frozen-lockfile
 COPY web/ ./
 # 生产 base 路径按需：根路径部署用 VITE_BASE=/
 RUN pnpm build
