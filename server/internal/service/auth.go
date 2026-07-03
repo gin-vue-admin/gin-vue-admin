@@ -71,6 +71,18 @@ var seedPermissionCodes = []string{
 	"config:system", "config:parameter", "config:email",
 }
 
+// seedMenus M4.1 种入的菜单数据（对齐前端 ALL_MENUS 核心结构）。
+// ParentID=0 为根菜单（无 PermissionCode）；PermissionCode 非空为 system 子菜单，
+// 其 ParentID 在 Seed 时动态指向 system 菜单的 ID。
+var seedMenus = []model.Menu{
+	{Name: "home", Title: "首页", Path: "/", Component: "dashboard/views/Home", Icon: "HomeFilled", Sort: 0, ShowMenu: true},
+	{Name: "crud", Title: "增删改查", Path: "/crud", Component: "crud/views/List", Icon: "Document", Sort: 10, ShowMenu: true},
+	{Name: "system", Title: "系统管理", Path: "/system", Icon: "Setting", Sort: 20, ShowMenu: true},
+	{Name: "systemUser", Title: "用户管理", Path: "/system/user", Component: "system/user/views/List", Icon: "User", Sort: 0, ShowMenu: true, PermissionCode: "user:list"},
+	{Name: "systemRole", Title: "角色管理", Path: "/system/role", Component: "system/role/views/List", Icon: "Avatar", Sort: 10, ShowMenu: true, PermissionCode: "role:list"},
+	{Name: "systemPermission", Title: "权限管理", Path: "/system/permission", Component: "system/permission/views/List", Icon: "Key", Sort: 20, ShowMenu: true, PermissionCode: "permission:list"},
+}
+
 // Seed 幂等种入权限/角色/账户。用 FirstOrCreate，已有数据不清不删。
 func (s *AuthService) Seed(ctx context.Context) error {
 	// 1. 权限
@@ -104,6 +116,11 @@ func (s *AuthService) Seed(ctx context.Context) error {
 		return err
 	}
 	if err := s.seedUser(ctx, seedNormal.username, seedNormal.password, seedNormal.nickname, "user"); err != nil {
+		return err
+	}
+
+	// M4.1: 菜单（根菜单先建拿 system 的 ID，子菜单 ParentID 指向 system）
+	if err := s.seedMenus(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -271,6 +288,40 @@ func (s *AuthService) GetProfile(ctx context.Context, userID uint) (*UserProfile
 
 // Logout 纯 JWT 模式下为空操作（token 不落库，前端清本地 storage）。
 func (s *AuthService) Logout(ctx context.Context) error {
+	return nil
+}
+
+// seedMenus 种入菜单。幂等：FirstOrCreate by Name。
+// 两步：根菜单（无 PermissionCode）先建，拿到 system 的 ID；
+// 子菜单（有 PermissionCode）后建，ParentID 指向 system。
+func (s *AuthService) seedMenus(ctx context.Context) error {
+	// 1. 先种根菜单（home/crud/system），拿 system 的 ID
+	rootMenus := []model.Menu{}
+	for _, m := range seedMenus {
+		if m.PermissionCode == "" { // 根菜单无 PermissionCode
+			existing := model.Menu{}
+			if err := s.db.WithContext(ctx).Where(model.Menu{Name: m.Name}).FirstOrCreate(&existing, m).Error; err != nil {
+				return err
+			}
+			if m.Name == "system" {
+				rootMenus = append(rootMenus, existing)
+			}
+		}
+	}
+	if len(rootMenus) == 0 {
+		return nil
+	}
+	systemID := rootMenus[0].ID
+	// 2. 种子菜单（有 PermissionCode），ParentID = systemID
+	for _, m := range seedMenus {
+		if m.PermissionCode != "" {
+			m.ParentID = systemID
+			existing := model.Menu{}
+			if err := s.db.WithContext(ctx).Where(model.Menu{Name: m.Name}).FirstOrCreate(&existing, m).Error; err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 

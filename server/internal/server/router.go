@@ -11,7 +11,7 @@ import (
 
 // NewRouter 装配全局中间件与路由。
 // permRepo 传入路由层仅用于 RequirePermission 中间件（按 userID 查权限码集合）。
-func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.PermissionHandler, roleHandler *handler.RoleHandler, userHandler *handler.UserHandler, permRepo repository.PermissionRepository, jwtMgr *jwt.Manager) *gin.Engine {
+func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.PermissionHandler, roleHandler *handler.RoleHandler, userHandler *handler.UserHandler, menuHandler *handler.MenuHandler, permRepo repository.PermissionRepository, jwtMgr *jwt.Manager) *gin.Engine {
 	r := gin.New()
 	r.HandleMethodNotAllowed = true
 	r.Use(
@@ -89,7 +89,12 @@ func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.Permission
 			user.DELETE("", middleware.RequirePermission(permRepo, "user:delete"), userHandler.BatchDelete)
 		}
 
-		// TODO(M4): /api/system/menus
+		// 系统菜单（动态路由用，登录即可访问，前端按权限过滤）
+		sys := api.Group("/system")
+		sys.Use(middleware.AuthRequired(jwtMgr))
+		{
+			sys.GET("/menus", menuHandler.Menus)
+		}
 	}
 
 	return r

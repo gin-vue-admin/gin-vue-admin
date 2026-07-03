@@ -62,8 +62,13 @@ func main() {
 	userSvc := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userSvc)
 
+	// M4.1: 菜单模块组装
+	menuRepo := repository.NewMenuRepository(gdb)
+	menuSvc := service.NewMenuService(menuRepo)
+	menuHandler := handler.NewMenuHandler(menuSvc)
+
 	authHandler := handler.NewAuthHandler(authSvc)
-	r := server.NewRouter(authHandler, permHandler, roleHandler, userHandler, permRepo, jwtMgr)
+	r := server.NewRouter(authHandler, permHandler, roleHandler, userHandler, menuHandler, permRepo, jwtMgr)
 
 	// 5. 启动 HTTP 服务
 	addr := ":" + strconv.Itoa(cfg.Server.Port)

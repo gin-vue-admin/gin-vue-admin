@@ -5,7 +5,8 @@ package model
 type Menu struct {
 	Model
 	ParentID       uint   `gorm:"index;default:0" json:"parentId"`
-	Name           string `gorm:"size:64" json:"name"`
+	Name           string `gorm:"size:64" json:"name"`          // 路由名（如 systemUser）
+	Title          string `gorm:"size:64" json:"title"`         // 显示名（如 用户管理）
 	Path           string `gorm:"size:255" json:"path"`
 	Component      string `gorm:"size:255" json:"component"`
 	Icon           string `gorm:"size:64" json:"icon"` // 前端要求 PascalCase 全局唯一
