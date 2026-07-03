@@ -14,7 +14,7 @@ help: ## 显示所有命令
 # ---------------- 后端 ----------------
 .PHONY: server-dev server-build server-run server-test server-tidy server-swag
 server-dev: ## 后端开发模式（热重载需自行接 air）
-	cd $(SERVER_DIR) && PORT=8080 go run ./cmd/api
+	cd $(SERVER_DIR) && go run ./cmd/api
 
 server-build: ## 编译后端二进制到 server/bin
 	cd $(SERVER_DIR) && go build -o bin/api ./cmd/api

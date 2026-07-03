@@ -1,0 +1,20 @@
+# 构建上下文忽略项，加速 docker build 并避免敏感文件入镜像。
+**/node_modules
+**/dist
+**/.git
+**/.idea
+**/.vscode
+**/bin
+**/tmp
+**/logs
+**/*.log
+**/*.db
+**/*.test
+**/.DS_Store
+
+# 本地配置覆盖（含密钥）
+server/configs/*.local.yaml
+server/configs/local/
+
+# SDD 过程草稿
+.superpowers/

@@ -1,0 +1,62 @@
+# 全栈编排：mysql + server + web(nginx)。
+# 用法：cd deploy && docker-compose up -d --build
+# 访问：http://localhost (web) ；后端 API 经 web 反代 /api。
+# 构建上下文为仓库根（server.Dockerfile/web.Dockerfile 引用 server/、web/）。
+# 受限网络设 REGISTRY=docker.m.daocloud.io/library（见 .env）。
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: gva-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gva}
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${MYSQL_PORT:-13306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  server:
+    build:
+      context: ..
+      dockerfile: deploy/server.Dockerfile
+      args:
+        REGISTRY: ${REGISTRY:-docker.io/library}
+    container_name: gva-server
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # GVA_ 前缀环境变量覆盖 config.yaml（M1 config.Load 支持）
+      GVA_APP__MODE: release
+      GVA_SERVER__PORT: "8080"
+      GVA_DB__HOST: mysql
+      GVA_DB__PORT: "3306"
+      GVA_DB__USER: root
+      GVA_DB__PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      GVA_DB__DBNAME: ${MYSQL_DATABASE:-gva}
+      GVA_JWT__SECRET: ${JWT_SECRET:-change-me-in-production}
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        REGISTRY: ${REGISTRY:-docker.io/library}
+    container_name: gva-web
+    depends_on:
+      - server
+    ports:
+      - "${WEB_PORT:-80}:80"
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
