@@ -12,6 +12,7 @@ type Menu struct {
 	Icon           string `gorm:"size:64" json:"icon"` // 前端要求 PascalCase 全局唯一
 	Sort           int    `gorm:"default:0" json:"sort"`
 	ShowMenu       bool   `gorm:"default:true" json:"showMenu"`
+	Status         string `gorm:"size:16;default:active" json:"status"` // 新增：active|inactive
 	PermissionCode string `gorm:"size:128" json:"permissionCode"`
 }
 

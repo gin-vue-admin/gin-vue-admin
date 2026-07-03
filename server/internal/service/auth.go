@@ -61,7 +61,7 @@ var seedNormal = struct {
 }
 
 // seedPermissionCodes M3.1 种入的权限码（对齐前端 mock permissionCodes）。
-// 共 23 个：system/user/role/permission/dict/config 六模块。
+// 共 27 个：system/user/role/permission/dict/config/menu 七模块。
 var seedPermissionCodes = []string{
 	"system:setting", "system:log", "system:operation",
 	"user:list", "user:create", "user:edit", "user:delete",
@@ -69,6 +69,7 @@ var seedPermissionCodes = []string{
 	"permission:list", "permission:create", "permission:edit", "permission:delete",
 	"dict:list", "dict:create", "dict:edit", "dict:delete",
 	"config:system", "config:parameter", "config:email",
+	"menu:list", "menu:create", "menu:edit", "menu:delete", // 新增 M4.2
 }
 
 // seedMenus M4.1 种入的菜单数据（对齐前端 ALL_MENUS 核心结构）。

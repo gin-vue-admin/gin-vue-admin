@@ -91,3 +91,71 @@ func TestMenuService_Empty(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, tree)
 }
+
+func TestMenuService_CRUD(t *testing.T) {
+	db := testutil.NewTestDB(t)
+	repo := repository.NewMenuRepository(db)
+	svc := NewMenuService(repo)
+	ctx := context.Background()
+
+	// 创建根
+	m, err := svc.Create(ctx, &MenuCreateReq{Name: "test", Title: "测试", Path: "/t", Status: "active"})
+	require.NoError(t, err)
+	assert.NotZero(t, m.ID)
+
+	// 详情
+	got, err := svc.Get(ctx, m.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "test", got.Name)
+
+	// 更新
+	got.Title = "改"
+	require.NoError(t, svc.Update(ctx, got))
+}
+
+func TestMenuService_Delete_Cascade(t *testing.T) {
+	db := testutil.NewTestDB(t)
+	repo := repository.NewMenuRepository(db)
+	svc := NewMenuService(repo)
+	ctx := context.Background()
+	parent, _ := svc.Create(ctx, &MenuCreateReq{Name: "p", Title: "父", Path: "/p", Status: "active"})
+	svc.Create(ctx, &MenuCreateReq{Name: "c", Title: "子", Path: "/c", ParentID: &parent.ID, Status: "active"})
+
+	require.NoError(t, svc.Delete(ctx, parent.ID))
+	// 子也删了
+	_, err := svc.Get(ctx, parent.ID)
+	assert.Error(t, err)
+}
+
+func TestMenuService_Sort_Inner(t *testing.T) {
+	db := testutil.NewTestDB(t)
+	repo := repository.NewMenuRepository(db)
+	svc := NewMenuService(repo)
+	ctx := context.Background()
+	target, _ := svc.Create(ctx, &MenuCreateReq{Name: "t", Title: "t", Path: "/t", Status: "active"})
+	dragging, _ := svc.Create(ctx, &MenuCreateReq{Name: "d", Title: "d", Path: "/d", Status: "active"})
+
+	err := svc.Sort(ctx, &MenuSortReq{DraggingID: dragging.ID, TargetID: target.ID, Position: "inner"})
+	require.NoError(t, err)
+	// dragging 的 parentId 应变 target.id
+	got, _ := repo.FindByID(ctx, dragging.ID)
+	assert.Equal(t, target.ID, got.ParentID)
+}
+
+func TestMenuService_Sort_Before(t *testing.T) {
+	db := testutil.NewTestDB(t)
+	repo := repository.NewMenuRepository(db)
+	svc := NewMenuService(repo)
+	ctx := context.Background()
+	t1, _ := svc.Create(ctx, &MenuCreateReq{Name: "t1", Title: "1", Path: "/1", Sort: 0, Status: "active"})
+	t2, _ := svc.Create(ctx, &MenuCreateReq{Name: "t2", Title: "2", Path: "/2", Sort: 1, Status: "active"})
+	drag, _ := svc.Create(ctx, &MenuCreateReq{Name: "d", Title: "d", Path: "/d", Sort: 2, Status: "active"})
+	_ = t1 // t1 仅占据 sort=0 槽位参与重排，断言不直接引用
+
+	// drag 放 t2 之前
+	err := svc.Sort(ctx, &MenuSortReq{DraggingID: drag.ID, TargetID: t2.ID, Position: "before"})
+	require.NoError(t, err)
+	got, _ := repo.FindByID(ctx, drag.ID)
+	// drag.sort 应在 t1(0) 与 t2 之间重排后
+	assert.Equal(t, 1, got.Sort) // 重排：t1=0, drag=1, t2=2
+}

@@ -94,6 +94,17 @@ func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.Permission
 		sys.Use(middleware.AuthRequired(jwtMgr))
 		{
 			sys.GET("/menus", menuHandler.Menus)
+
+			// 菜单管理 CRUD（M4.2）—— /menu 组挂在 /menus 后，权限码 menu:* 已 seed。
+			// 子组继承 sys 的 AuthRequired，无需重复挂载。
+			menu := sys.Group("/menu")
+			{
+				menu.GET("", middleware.RequirePermission(permRepo, "menu:list"), menuHandler.GetTree)
+				menu.POST("", middleware.RequirePermission(permRepo, "menu:create"), menuHandler.Create)
+				menu.PUT("/:id", middleware.RequirePermission(permRepo, "menu:edit"), menuHandler.Update)
+				menu.DELETE("/:id", middleware.RequirePermission(permRepo, "menu:delete"), menuHandler.Delete)
+				menu.PATCH("/sort", middleware.RequirePermission(permRepo, "menu:edit"), menuHandler.Sort)
+			}
 		}
 	}
 
