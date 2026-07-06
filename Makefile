@@ -12,7 +12,7 @@ help: ## 显示所有命令
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
 # ---------------- 后端 ----------------
-.PHONY: server-dev server-build server-run server-test server-tidy server-swag
+.PHONY: server-dev server-build server-run server-test server-cover server-lint server-tidy server-swag server-ci
 server-dev: ## 后端开发模式（热重载需自行接 air）
 	cd $(SERVER_DIR) && go run ./cmd/api
 
@@ -25,11 +25,23 @@ server-run: $(SERVER_BIN) ## 运行编译后的后端
 server-test: ## 运行后端单测
 	cd $(SERVER_DIR) && go test ./...
 
+server-cover: ## 运行后端单测并输出覆盖率报告（cover.html）
+	cd $(SERVER_DIR) && go test -coverprofile=coverage.out ./... && \
+		go tool cover -html=coverage.out -o cover.html && \
+		echo "覆盖率报告：$(SERVER_DIR)/cover.html"
+
+server-lint: ## 静态检查（golangci-lint v2）
+	cd $(SERVER_DIR) && golangci-lint run ./...
+
 server-tidy: ## 整理后端依赖
 	cd $(SERVER_DIR) && go mod tidy
 
-server-swag: ## 生成 Swagger 文档（M5 启用）
-	cd $(SERVER_DIR) && swag init -g cmd/api/main.go -o docs
+server-swag: ## 生成 Swagger 文档（解析 internal 包与依赖以展开 DTO 类型）
+	cd $(SERVER_DIR) && swag init -g cmd/api/main.go -o docs --parseInternal --parseDependency
+
+# CI 本地复现：lint + vet + test + build + swagger 校验，与 .github/workflows/ci.yml 对齐
+server-ci: server-lint server-swag ## CI 本地复现（lint → swagger 生成 → test → build）
+	cd $(SERVER_DIR) && go vet ./... && go test ./... && go build -o bin/api ./cmd/api
 
 # ---------------- 前端 ----------------
 .PHONY: web-install web-dev web-build
@@ -41,6 +53,17 @@ web-dev: ## 启动前端开发服务器
 
 web-build: ## 构建前端生产包
 	cd $(WEB_DIR) && pnpm build
+
+# ---------------- 文档站（VitePress） ----------------
+.PHONY: docs-install docs-dev docs-build
+docs-install: ## 安装文档站依赖（根 package.json）
+	pnpm install
+
+docs-dev: ## 文档站本地预览（http://localhost:5173/docs/，端口冲突用 VITE_PORT 覆盖）
+	pnpm docs:dev
+
+docs-build: ## 构建文档站静态产物（DOCS_BASE 控制子路径）
+	DOCS_BASE=${DOCS_BASE:-/docs/} pnpm docs:build
 
 # ---------------- 部署 ----------------
 .PHONY: compose-up compose-down compose-build

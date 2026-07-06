@@ -1,0 +1,21 @@
+# EditorConfig — 跨编辑器/IDE 统一基础格式（https://editorconfig.org）
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Go：Tab 缩进（gofmt 规范）
+[*.{go,mod,sum}]
+indent_style = tab
+
+# 前端与 YAML/JSON：2 空格
+[*.{js,ts,jsx,tsx,vue,json,yaml,yml,md,css,scss,html}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab

@@ -1,0 +1,66 @@
+# CI — 后端代码质量门禁
+# 触发：push 到 main、任意 PR。矩阵：Go 1.25.x（与 go.mod 对齐）。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同分支新提交取消进行中的旧 run，省 CI 配额
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test-build:
+    name: Lint + Test + Build (go ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.25"]
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: server/go.sum
+
+      - name: 安装 golangci-lint v2
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.12.2
+          working-directory: server
+          args: --timeout=5m
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: 生成 Swagger 文档（验证 handler 注解可被 swag 解析）
+        uses: swaggo/swag-action@v2
+        with:
+          working-directory: server
+          args: init -g cmd/api/main.go -o docs --parseInternal --parseDependency --quiet
+
+      - name: 单元测试（含覆盖率）
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: 上传覆盖率
+        if: matrix.go == '1.25'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: server/coverage.out
+          retention-days: 14
+
+      - name: 编译二进制
+        run: go build -o bin/api ./cmd/api
