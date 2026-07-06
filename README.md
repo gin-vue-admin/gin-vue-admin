@@ -100,7 +100,8 @@ docker run -d --name gva-mysql -p 13306:3306 \
   -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=gva mysql:8
 
 # 2. 后端
-make server-dev          # :8080（端口冲突见下方"端口冲突处理"）
+cd server && cp configs/config.example.yaml configs/config.yaml   # 首次：从模板创建本地配置（config.yaml 被 gitignore）
+cd .. && make server-dev  # :8080（端口冲突见下方"端口冲突处理"）
 curl http://localhost:8080/api/health
 
 # 3. 前端

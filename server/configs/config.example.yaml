@@ -1,0 +1,41 @@
+# gva 后端配置模板。
+#
+# 用法：
+#   cp configs/config.example.yaml configs/config.yaml   # 复制为本地配置（config.yaml 被 gitignore，不入库）
+#   按需修改 config.yaml，或用环境变量覆盖（见下方各字段注释）
+#
+# 环境变量覆盖规则：GVA_ 前缀 + 双下划线分隔嵌套（viper 自动绑定）。
+# 例：GVA_DB__PASSWORD、GVA_DB__PORT、GVA_JWT__SECRET、GVA_SERVER__PORT、GVA_APP__MODE。
+# 生产环境强烈建议全部用环境变量注入，不要把真实密码写进 config.yaml。
+
+app:
+  name: gva
+  mode: debug          # debug | release（生产用 release）
+
+server:
+  port: 8080           # Gin 标准；端口冲突用 GVA_SERVER__PORT 覆盖
+
+db:
+  driver: mysql
+  host: 127.0.0.1      # Docker 部署 compose 内用容器名 mysql
+  port: 3306           # MySQL 标准端口；本机 Docker 映射可用 13306 等
+  user: root
+  password: change-me   # 生产必改：GVA_DB__PASSWORD 注入强密码
+  dbname: gva
+  charset: utf8mb4
+  maxOpenConn: 100
+  maxIdleConn: 10
+
+jwt:
+  secret: change-me-in-production   # 生产必改：openssl rand -hex 32，用 GVA_JWT__SECRET 注入
+  accessTTL: 3600       # access token 有效期（秒），1 小时
+  refreshTTL: 604800    # refresh token 有效期（秒），7 天
+  issuer: gva
+
+log:
+  level: info
+  mode: console         # console | file
+  filename: logs/gva.log
+  maxSize: 100          # MB
+  maxAge: 30            # 天
+  maxBackups: 7

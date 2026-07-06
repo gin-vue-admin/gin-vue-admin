@@ -10,7 +10,7 @@ cd gin-vue-admin
 
 # 后端（Go 1.25+）
 cd server
-cp configs/config.yaml configs/config.local.yaml   # 按需修改本地配置（已被 gitignore）
+cp configs/config.example.yaml configs/config.yaml   # 首次：从模板创建本地配置（config.yaml 被 gitignore）
 make -C .. server-swag                              # 首次生成 Swagger docs 包
 go run ./cmd/api                                    # :8080
 
