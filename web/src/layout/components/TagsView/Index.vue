@@ -1,0 +1,193 @@
+<template>
+  <div class="tags-view-container">
+    <el-scrollbar class="tags-view-wrapper">
+      <router-link
+        v-for="(tag, index) in tagsViewList"
+        :key="tag.fullPath"
+        class="tags-view-item"
+        :style="{
+          backgroundColor: isActive(tag) ? 'var(--el-menu-hover-bg-color)' : '',
+          color: isActive(tag) ? 'var(--el-menu-active-color)' : '',
+          borderColor: isActive(tag) ? '' : ''
+        }"
+        :to="{ path: tag.fullPath }"
+        @contextmenu.prevent="openMenu($event, index)"
+      >
+        {{ tag.title }}
+        <template v-if="!isAffiix(tag)">
+          <Close
+            class="el-icon-close"
+            @click.prevent.stop="onCloseClick(index, tag)"
+          />
+        </template>
+      </router-link>
+    </el-scrollbar>
+    <context-menu
+      v-show="visible"
+      :style="menuStyle"
+      :index="selectIndex"
+    />
+  </div>
+</template>
+
+<script lang="ts" setup>
+import ContextMenu from './ContextMenu.vue'
+import { useTagsViewClose } from './useTagsViewClose'
+import { ref, reactive, watch } from 'vue'
+import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useTagsViewStore, type TagsViewItem } from '@/app/stores/tagsView'
+
+const route = useRoute()
+
+const tagsViewStore = useTagsViewStore()
+const { tagsViewList } = storeToRefs(tagsViewStore)
+const { addTagsViewList } = tagsViewStore
+
+const { closeCurrent } = useTagsViewClose()
+
+const isActive = (tag: TagsViewItem) => {
+  return tag.path === route.path
+}
+const isAffiix = (tag: TagsViewItem) => {
+  return tag.meta && tag.meta.affix
+}
+
+// contextMenu 相关
+const selectIndex = ref(0)
+const visible = ref(false)
+const menuStyle = reactive({
+  left: '0',
+  top: '0'
+})
+
+const openMenu = (e: MouseEvent, index: number) => {
+  const { x, y } = e
+  menuStyle.left = x + 'px'
+  menuStyle.top = y + 'px'
+  selectIndex.value = index
+  visible.value = true
+}
+
+const onCloseClick = (index: number, _tag: TagsViewItem) => {
+  // 跳转逻辑（关当前激活 tag 后回退到相邻 tag 或首页）已抽到
+  // useTagsViewClose composable，与 ContextMenu 的「关闭当前」共享
+  closeCurrent(index)
+}
+
+const closeMenu = () => {
+  visible.value = false
+}
+
+watch(
+  visible,
+  (val) => {
+    if (val) {
+      document.body.addEventListener('click', closeMenu)
+    } else {
+      document.body.removeEventListener('click', closeMenu)
+    }
+  },
+  { immediate: true }
+)
+
+const getTitle = (route: RouteLocationNormalizedLoaded) => {
+  if (!route.meta) {
+    const pathArr = route.path.split('/')
+    return pathArr[pathArr.length - 1]
+  }
+  return route.meta?.title as string
+}
+
+watch(
+  route,
+  (to) => {
+    const { fullPath, meta: _meta, name: _name, params, path, query } = to
+    let affix = false
+    if (path === '/') {
+      affix = true
+    }
+    const title = getTitle(to)
+    if (title === undefined || title === '') {
+      return
+    }
+    addTagsViewList({
+      fullPath,
+      params,
+      path,
+      query,
+      title: title,
+      name: title,
+      meta: { title: title, affix: affix }
+    })
+  },
+  { immediate: true }
+)
+</script>
+
+<style lang="scss" scoped>
+.tags-view-container {
+  height: 34px;
+  width: 100%;
+  border-bottom: 1px solid var(--el-menu-border-color);
+
+  .tags-view-item {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    height: 26px;
+    line-height: 26px;
+    border: 1px solid var(--el-menu-border-color);
+    color: var(--el-menu-text-color);
+    padding: 0 8px;
+    font-size: 12px;
+    margin-left: 5px;
+    margin-top: 4px;
+
+    &:first-of-type {
+      margin-left: 15px;
+    }
+
+    &:last-of-type {
+      margin-right: 15px;
+    }
+
+    &.active {
+      color: #fff;
+
+      &::before {
+        content: '';
+        background: #fff;
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        position: relative;
+        margin-right: 4px;
+      }
+    }
+
+    .el-icon-close {
+      height: 1em;
+      width: 1em;
+      line-height: 10px;
+      vertical-align: -2px;
+      border-radius: 50%;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+      transform-origin: 100% 50%;
+
+      &:before {
+        transform: scale(0.6);
+        display: inline-block;
+        vertical-align: -3px;
+      }
+
+      &:hover {
+        background-color: var(--el-menu-hover-bg-color);
+        color: var(--el-menu-hover-text-color);
+      }
+    }
+  }
+}
+</style>

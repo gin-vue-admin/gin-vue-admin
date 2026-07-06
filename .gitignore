@@ -1,6 +1,8 @@
 # ===== Go (server/) =====
 server/bin/
 server/tmp/
+server/api
+server/docs-site/
 *.exe
 *.exe~
 *.dll
@@ -10,6 +12,7 @@ server/tmp/
 *.out
 *.prof
 *.log
+server/cover.html
 # 本地覆盖配置（不提交密钥/密码）
 server/configs/*.local.yaml
 server/configs/local/
@@ -24,6 +27,25 @@ Thumbs.db
 deploy/data/
 deploy/dist/
 
-# ===== 前端（web 为 submodule，内部自带 .gitignore；此处仅兜底）=====
+# ===== 前端（web/ 为普通目录，内部另有 .gitignore；此处仅兜底）=====
 web/node_modules/
 web/dist/
+web/.vite/
+*.tsbuildinfo
+
+# ===== 文档站（根级 VitePress）=====
+node_modules/
+docs-site/.vitepress/dist/
+docs-site/.vitepress/cache/
+
+# ===== web/ 上游治理文件（vue-admin 带入，与根项目治理冲突，不入库）=====
+web/.github/
+web/LICENSE
+web/CODE_OF_CONDUCT.md
+web/CONTRIBUTING.md
+web/SECURITY.md
+web/CHANGELOG.md
+web/docs/superpowers/
+
+# ===== 开发会话产物（brainstorm/spec/plan，不入库）=====
+docs/superpowers/

@@ -1,0 +1,90 @@
+import { createApp, watch } from 'vue'
+import { createPinia } from 'pinia'
+import ElementPlus from 'element-plus'
+import App from './App.vue'
+import router from '@/router'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import locale from 'element-plus/es/locale/lang/zh-cn'
+import { defaultMonitor } from '@/lib/error/monitor'
+import { installGlobalErrorHandlers } from '@/lib/error/installGlobalErrorHandlers'
+import { vPermission } from '@/app/directives/permission'
+import { installGuards } from '@/lib/router/guards'
+import { useLayoutStore } from '@/app/stores/layout'
+import { applyPrimaryColor } from '@/lib/theme/colors'
+import { i18n, setLocale } from '@/lib/i18n'
+
+import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
+import '@/assets/main.scss'
+
+const app = createApp(App)
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
+app.use(ElementPlus, { locale: locale })
+const pinia = createPinia()
+app.use(pinia)
+
+// 注册权限指令（v-permission）
+app.directive('permission', vPermission)
+
+// 全局 provide monitor（依赖注入，便于替换 Sentry 等）
+app.provide('monitor', defaultMonitor)
+
+// 全局错误处理器：Vue 运行时 / window.onerror / 未捕获 Promise 拒绝
+installGlobalErrorHandlers(app, defaultMonitor)
+
+// 主题色：监听 layout store.primaryColor，写入主色 + 6 阶派生色（light-3/5/7/8/9, dark-2）
+// 派生色由 lib/theme/colors 按 Element Plus 官方 SCSS mix 语义在运行时生成
+const layoutStore = useLayoutStore()
+watch(
+  () => layoutStore.primaryColor,
+  (color) => {
+    applyPrimaryColor(color)
+  },
+  { immediate: true }
+)
+
+// 国际化：注册 vue-i18n + 同步 layout store.locale
+app.use(i18n)
+watch(
+  () => layoutStore.locale,
+  (l) => {
+    setLocale(l)
+  },
+  { immediate: true }
+)
+
+async function bootstrap() {
+  // MSW mock 仅在显式 VITE_ENABLE_MOCK=true 时启用；
+  // 默认（含 dev）走真实后端（vite.config.ts 的 server.proxy 转发 /api → 默认 :8080，可由 GVA_API_TARGET 覆盖）。
+  const enableMock = import.meta.env.VITE_ENABLE_MOCK === 'true'
+  if (enableMock) {
+    const { worker } = await import('@/mock/browser')
+    await worker.start({
+      onUnhandledRequest: 'bypass',
+      serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` }
+    })
+  }
+
+  // 拉公开配置（sys_config 白名单：site_title/login_captcha_enabled/default_page_size）
+  // site_title 即时设浏览器标题；其余存 localStorage 供各页面读取（配置中心无需鉴权）。
+  try {
+    const res = await fetch('/api/system/config/public')
+    const json = await res.json()
+    const cfg: Record<string, string> = json?.data ?? {}
+    if (cfg.site_title) document.title = cfg.site_title
+    for (const k of ['login_captcha_enabled', 'default_page_size', 'site_title']) {
+      if (cfg[k] != null) localStorage.setItem(`gva_config_${k}`, cfg[k])
+    }
+  } catch (e) {
+    console.warn('[bootstrap] 加载公开配置失败', e)
+  }
+
+  // 安装 4 步全局守卫（必须在 app.use(router) 之前，且在 MSW worker 启动之后，
+  // 否则首次导航时的 bootstrap 请求可能绕过 mock，导致动态路由注册失败）
+  installGuards(router)
+  app.use(router)
+  app.mount('#app')
+}
+bootstrap()
