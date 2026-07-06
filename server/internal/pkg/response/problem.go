@@ -21,13 +21,13 @@ var httpStatusTitle = map[int]string{
 
 // ProblemDetail RFC 7807 错误响应结构。
 type ProblemDetail struct {
-	Type     string              `json:"type"`           // 问题类型 URI
-	Title    string              `json:"title"`          // 简短摘要
-	Status   int                 `json:"status"`         // HTTP 状态码
-	Detail   string              `json:"detail"`         // 具体说明
+	Type     string              `json:"type"`   // 问题类型 URI
+	Title    string              `json:"title"`  // 简短摘要
+	Status   int                 `json:"status"` // HTTP 状态码
+	Detail   string              `json:"detail"` // 具体说明
 	Instance string              `json:"instance,omitempty"`
-	Code     string              `json:"code,omitempty"`     // 应用层错误码（机器可读）
-	Errors   map[string][]string `json:"errors,omitempty"`   // 字段级错误（表单校验）
+	Code     string              `json:"code,omitempty"`   // 应用层错误码（机器可读）
+	Errors   map[string][]string `json:"errors,omitempty"` // 字段级错误（表单校验）
 	TraceID  string              `json:"traceId,omitempty"`
 }
 
@@ -63,11 +63,11 @@ func Problem(c *gin.Context, status int, title, detail string, opts ...ProblemOp
 		title = titleOf(status)
 	}
 	p := ProblemDetail{
-		Type:    "about:blank",
-		Title:   title,
-		Status:  status,
-		Detail:  detail,
-		TraceID: traceIDFrom(c),
+		Type:     "about:blank",
+		Title:    title,
+		Status:   status,
+		Detail:   detail,
+		TraceID:  traceIDFrom(c),
 		Instance: c.Request.URL.Path,
 	}
 	for _, opt := range opts {

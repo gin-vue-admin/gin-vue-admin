@@ -8,18 +8,22 @@ type Query struct {
 	Keyword string `form:"keyword"`
 	Status  string `form:"status"`
 	Page    int    `form:"page,default=1"`
-	Size    int    `form:"size,default=10"`
+	Size    int    `form:"size"` // 不传时由 Normalize 用 DefaultSize（受 sys_config 控制）
 }
 
 const maxPageSize = 100
 
-// Normalize 补默认值并限制 size 上限。
+// DefaultSize 默认每页条数；可被 sys_config 的 default_page_size 覆盖
+// （见 sys_config service 的 applyRuntime）。
+var DefaultSize = 10
+
+// Normalize 补默认值并限制 size 上限。Size 未传时用 DefaultSize（受 sys_config 控制）。
 func (q *Query) Normalize() {
 	if q.Page < 1 {
 		q.Page = 1
 	}
 	if q.Size < 1 {
-		q.Size = 10
+		q.Size = DefaultSize
 	}
 	if q.Size > maxPageSize {
 		q.Size = maxPageSize

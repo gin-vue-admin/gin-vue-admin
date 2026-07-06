@@ -5,9 +5,10 @@ package apperr
 import (
 	"errors"
 
-	"github.com/gin-gonic/gin"
 	"gva/internal/pkg/log"
 	"gva/internal/pkg/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Error 应用层错误，携带 HTTP 状态码与 ProblemDetail 字段。

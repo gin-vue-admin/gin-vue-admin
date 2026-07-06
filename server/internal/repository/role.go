@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 
-	"gorm.io/gorm"
 	"gva/internal/model"
 	"gva/internal/pkg/pagination"
+
+	"gorm.io/gorm"
 )
 
 // RoleRepository 角色数据访问接口。

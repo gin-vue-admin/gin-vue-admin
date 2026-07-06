@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 
-	"gorm.io/gorm"
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/async"
@@ -14,6 +13,8 @@ import (
 	"gva/internal/pkg/jwt"
 	"gva/internal/pkg/log"
 	"gva/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 // AuthResult 登录/刷新返回，对齐前端 AuthResult。
@@ -36,16 +37,18 @@ type UserProfile struct {
 // AuthService 认证业务。
 // db 字段仅供 Seed 使用（多表种子操作不塞进 UserRepository 接口，避免臃肿）。
 type AuthService struct {
-	repo   repository.UserRepository
-	db     *gorm.DB // 仅 Seed 使用
-	jwtMgr *jwt.Manager
-	runner async.Runner
+	repo         repository.UserRepository
+	db           *gorm.DB // 仅 Seed 使用
+	jwtMgr       *jwt.Manager
+	runner       async.Runner
+	loginLogRepo repository.LoginLogRepository // 登录日志；nil 则不记录（保留可空以便简化非日志场景装配）
 }
 
-// NewAuthService 构造认证服务。runner 用于派发登录统计等后台任务，
+// NewAuthService 构造认证服务。runner 用于派发登录统计/登录日志等后台任务，
 // 生产传 GoroutineRunner（异步），测试传 SyncRunner（同步执行，消除 goroutine 与 teardown 的竞态）。
-func NewAuthService(repo repository.UserRepository, db *gorm.DB, jwtMgr *jwt.Manager, runner async.Runner) *AuthService {
-	return &AuthService{repo: repo, db: db, jwtMgr: jwtMgr, runner: runner}
+// loginLogRepo 供登录审计；传 nil 可禁用日志记录。
+func NewAuthService(repo repository.UserRepository, db *gorm.DB, jwtMgr *jwt.Manager, runner async.Runner, loginLogRepo repository.LoginLogRepository) *AuthService {
+	return &AuthService{repo: repo, db: db, jwtMgr: jwtMgr, runner: runner, loginLogRepo: loginLogRepo}
 }
 
 // 种子数据定义（对齐前端 mock USERS）。
@@ -61,7 +64,7 @@ var seedNormal = struct {
 }
 
 // seedPermissionCodes M3.1 种入的权限码（对齐前端 mock permissionCodes）。
-// 共 27 个：system/user/role/permission/dict/config/menu 七模块。
+// system/user/role/permission/dict/config/menu/crud 八模块。
 var seedPermissionCodes = []string{
 	"system:setting", "system:log", "system:operation",
 	"user:list", "user:create", "user:edit", "user:delete",
@@ -69,7 +72,10 @@ var seedPermissionCodes = []string{
 	"permission:list", "permission:create", "permission:edit", "permission:delete",
 	"dict:list", "dict:create", "dict:edit", "dict:delete",
 	"config:system", "config:parameter", "config:email",
-	"menu:list", "menu:create", "menu:edit", "menu:delete", // 新增 M4.2
+	"menu:list", "menu:create", "menu:edit", "menu:delete", // M4.2 菜单管理
+	"crud:list", "crud:create", "crud:edit", "crud:delete", // M6 通用 CRUD 范例
+	"dept:list", "dept:create", "dept:edit", "dept:delete", // M7 部门管理
+	"notice:list", "notice:create", "notice:edit", "notice:delete", // 公告管理
 }
 
 // seedMenus M4.1 种入的菜单数据（对齐前端 ALL_MENUS 核心结构）。
@@ -77,11 +83,15 @@ var seedPermissionCodes = []string{
 // 其 ParentID 在 Seed 时动态指向 system 菜单的 ID。
 var seedMenus = []model.Menu{
 	{Name: "home", Title: "首页", Path: "/", Component: "dashboard/views/Home", Icon: "HomeFilled", Sort: 0, ShowMenu: true},
-	{Name: "crud", Title: "增删改查", Path: "/crud", Component: "crud/views/List", Icon: "Document", Sort: 10, ShowMenu: true},
+	{Name: "crud", Title: "增删改查", Path: "/crud", Component: "crud/views/List", Icon: "Document", Sort: 10, ShowMenu: true, PermissionCode: "crud:list"},
 	{Name: "system", Title: "系统管理", Path: "/system", Icon: "Setting", Sort: 20, ShowMenu: true},
 	{Name: "systemUser", Title: "用户管理", Path: "/system/user", Component: "system/user/views/List", Icon: "User", Sort: 0, ShowMenu: true, PermissionCode: "user:list"},
 	{Name: "systemRole", Title: "角色管理", Path: "/system/role", Component: "system/role/views/List", Icon: "Avatar", Sort: 10, ShowMenu: true, PermissionCode: "role:list"},
 	{Name: "systemPermission", Title: "权限管理", Path: "/system/permission", Component: "system/permission/views/List", Icon: "Key", Sort: 20, ShowMenu: true, PermissionCode: "permission:list"},
+	{Name: "systemDept", Title: "部门管理", Path: "/system/dept", Component: "system/dept/views/List", Icon: "OfficeBuilding", Sort: 30, ShowMenu: true, PermissionCode: "dept:list"},
+	{Name: "systemDict", Title: "字典管理", Path: "/system/dict", Component: "system/dict/views/List", Icon: "Collection", Sort: 40, ShowMenu: true, PermissionCode: "dict:list"},
+	{Name: "systemConfig", Title: "参数配置", Path: "/system/config", Component: "system/config/views/List", Icon: "Tools", Sort: 50, ShowMenu: true, PermissionCode: "config:system"}, // M10 系统参数配置
+	{Name: "systemNotice", Title: "公告管理", Path: "/system/notice", Component: "system/notice/views/List", Icon: "Bell", Sort: 60, ShowMenu: true, PermissionCode: "notice:list"},
 }
 
 // Seed 幂等种入权限/角色/账户。用 FirstOrCreate，已有数据不清不删。
@@ -124,6 +134,11 @@ func (s *AuthService) Seed(ctx context.Context) error {
 	if err := s.seedMenus(ctx); err != nil {
 		return err
 	}
+
+	// M10: 系统参数配置（内置 key，幂等 FirstOrCreate）
+	if err := s.seedSysConfigs(ctx); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -132,9 +147,27 @@ func firstOrCreatePerm(ctx context.Context, db *gorm.DB, p *model.Permission) er
 	return db.WithContext(ctx).Where(model.Permission{Code: p.Code}).FirstOrCreate(p).Error
 }
 
+// seedSysConfigs M10 内置系统参数配置。幂等：FirstOrCreate by ConfigKey。
+var seedSysConfigs = []model.SysConfig{
+	{ConfigKey: "site_title", ConfigValue: "GVA 管理系统", ConfigName: "站点标题", Remark: "浏览器标签与登录页标题", Type: "string"},
+	{ConfigKey: "default_page_size", ConfigValue: "10", ConfigName: "默认分页大小", Remark: "列表默认每页条数", Type: "int"},
+	{ConfigKey: "login_captcha_enabled", ConfigValue: "false", ConfigName: "登录验证码开关", Remark: "是否开启登录验证码", Type: "bool"},
+	{ConfigKey: "token_expire_seconds", ConfigValue: "86400", ConfigName: "Token 有效期（秒）", Remark: "JWT access token 有效期", Type: "int"},
+}
+
+func (s *AuthService) seedSysConfigs(ctx context.Context) error {
+	for _, sc := range seedSysConfigs {
+		c := sc // 避免循环变量地址复用
+		if err := s.db.WithContext(ctx).Where(model.SysConfig{ConfigKey: c.ConfigKey}).FirstOrCreate(&c).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // seedRole 按 code 查/建角色，并补齐角色-权限关联（Replace 去重）。
 func (s *AuthService) seedRole(ctx context.Context, code, name, description string, perms []model.Permission) error {
-	role := model.Role{Code: code, Name: name, Description: description, Status: "active"}
+	role := model.Role{Code: code, Name: name, Description: description, Status: "active", DataScope: "all"}
 	if err := s.db.WithContext(ctx).Where(model.Role{Code: code}).FirstOrCreate(&role).Error; err != nil {
 		return err
 	}
@@ -183,27 +216,38 @@ func (s *AuthService) seedUser(ctx context.Context, username, password, nickname
 
 // Login 校验凭据并签发 access/refresh token。
 // 安全：用户不存在与密码错返回同一文案，防用户枚举。
-func (s *AuthService) Login(ctx context.Context, username, password string) (*AuthResult, error) {
+// ip/userAgent 用于登录审计日志（响应文案不暴露失败原因，但日志记真实原因供内部审计）。
+func (s *AuthService) Login(ctx context.Context, username, password, ip, userAgent string) (res *AuthResult, err error) {
+	// 登录日志：defer 统一记录，无论从哪个 return 退出都能命中。SyncRunner 下同步写入，测试可即时观察。
+	// status/reason 为命名闭包变量，成功路径会在返回前改写 status="success"。
+	status, reason := "failed", ""
+	defer s.recordLogin(username, ip, userAgent, &status, &reason)
+
 	user, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			reason = "用户不存在"
 			return nil, apperr.Unauthorized("用户名或密码错误")
 		}
 		return nil, err
 	}
 	if user.Status != "active" {
+		reason = "账户已禁用"
 		return nil, apperr.Unauthorized("账户已禁用")
 	}
 	if err := hash.Compare(user.Password, password); err != nil {
+		reason = "密码错误"
 		return nil, apperr.Unauthorized("用户名或密码错误")
 	}
 
 	access, err := s.jwtMgr.GenerateAccess(user.ID, user.Username)
 	if err != nil {
+		reason = "令牌签发失败"
 		return nil, err
 	}
 	refresh, err := s.jwtMgr.GenerateRefresh(user.ID, user.Username)
 	if err != nil {
+		reason = "令牌签发失败"
 		return nil, err
 	}
 
@@ -215,11 +259,28 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Au
 		}
 	})
 
+	status = "success"
 	return &AuthResult{
 		AccessToken:  access,
 		RefreshToken: refresh,
 		ExpiresIn:    s.jwtMgr.AccessTTLSeconds(),
 	}, nil
+}
+
+// recordLogin 异步写入一条登录日志。status/reason 经指针传入，以便 defer 在命名返回前读取最终值。
+// loginLogRepo 为 nil 时静默跳过。
+func (s *AuthService) recordLogin(username, ip, userAgent string, status, reason *string) {
+	if s.loginLogRepo == nil {
+		return
+	}
+	entry := &model.LoginLog{
+		Username:  username,
+		IP:        ip,
+		UserAgent: userAgent,
+		Status:    *status,
+		Reason:    *reason,
+	}
+	s.runner.Go(func() { _ = s.loginLogRepo.Create(context.Background(), entry) })
 }
 
 // Refresh 校验 refresh token 并签发新的 token 对。

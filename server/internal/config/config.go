@@ -18,15 +18,18 @@ type Config struct {
 	Log    LogConfig    `mapstructure:"log"`
 }
 
+// AppConfig 应用级配置（名称/运行模式）。
 type AppConfig struct {
 	Name string `mapstructure:"name"`
 	Mode string `mapstructure:"mode"` // debug | release
 }
 
+// ServerConfig HTTP 服务配置。
 type ServerConfig struct {
 	Port int `mapstructure:"port"`
 }
 
+// DBConfig 数据库（MySQL）连接配置。
 type DBConfig struct {
 	Driver      string `mapstructure:"driver"`
 	Host        string `mapstructure:"host"`
@@ -45,6 +48,7 @@ func (d DBConfig) DSN() string {
 		d.User, d.Password, d.Host, d.Port, d.DBName, d.Charset)
 }
 
+// JWTConfig 令牌签发配置（密钥/TTL/签发方）。
 type JWTConfig struct {
 	Secret     string `mapstructure:"secret"`
 	AccessTTL  int    `mapstructure:"accessTTL"`  // 秒
@@ -52,12 +56,13 @@ type JWTConfig struct {
 	Issuer     string `mapstructure:"issuer"`
 }
 
+// LogConfig 日志配置（级别/输出模式/滚动参数）。
 type LogConfig struct {
 	Level      string `mapstructure:"level"` // debug | info | warn | error
 	Mode       string `mapstructure:"mode"`  // console | file
 	Filename   string `mapstructure:"filename"`
-	MaxSize    int    `mapstructure:"maxSize"`    // MB
-	MaxAge     int    `mapstructure:"maxAge"`     // 天
+	MaxSize    int    `mapstructure:"maxSize"` // MB
+	MaxAge     int    `mapstructure:"maxAge"`  // 天
 	MaxBackups int    `mapstructure:"maxBackups"`
 }
 

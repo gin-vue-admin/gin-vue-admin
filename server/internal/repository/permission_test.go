@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gva/internal/model"
 	"gva/internal/pkg/pagination"
 	"gva/internal/testutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPermissionRepo_CRUD 覆盖 Create/FindByID/Update/Delete（软删）主路径。

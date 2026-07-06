@@ -6,9 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"gva/internal/pkg/apperr"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"gva/internal/pkg/apperr"
 )
 
 // fakeReader 测试用 PermissionReader 桩，记录调用次数。

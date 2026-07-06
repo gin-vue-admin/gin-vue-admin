@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"gva/internal/config"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"gva/internal/config"
 )
 
 // NewMySQL 建立 MySQL 连接并配置连接池参数。

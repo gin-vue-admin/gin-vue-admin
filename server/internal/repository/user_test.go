@@ -4,11 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gva/internal/model"
+	"gva/internal/pkg/datascope"
 	"gva/internal/pkg/pagination"
 	"gva/internal/testutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestUserRepo_CRUD 覆盖 Create/FindByID/Update 主流程。
@@ -48,7 +50,7 @@ func TestUserRepo_List_FilterRole(t *testing.T) {
 
 	q := pagination.Query{Page: 1, Size: 10}
 	q.Normalize()
-	users, total, err := repo.List(ctx, q, "admin")
+	users, total, err := repo.List(ctx, q, "admin", datascope.Scope{All: true})
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), total) // 仅 u1 有 admin 角色
 	assert.Len(t, users, 1)

@@ -37,10 +37,10 @@ func TestBuild_Time(t *testing.T) {
 func TestBuild_SpecialChars(t *testing.T) {
 	rows := []map[string]any{
 		{
-			"desc":  "包含,逗号",
-			"quote": "他说\"你好\"",
+			"desc":    "包含,逗号",
+			"quote":   "他说\"你好\"",
 			"newline": "第一行\n第二行",
-			"normal": "普通文本",
+			"normal":  "普通文本",
 		},
 	}
 	headers := []string{"desc", "quote", "newline", "normal"}

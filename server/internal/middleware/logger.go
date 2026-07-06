@@ -3,10 +3,11 @@ package middleware
 import (
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"gva/internal/pkg/log"
 	"gva/internal/pkg/response"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // Logger 记录每个请求的访问日志（方法/路径/状态/耗时/traceId）。

@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"gva/internal/model"
+
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gva/internal/model"
 )
 
 // NewTestDB 创建独立的 SQLite 临时文件库并 AutoMigrate。

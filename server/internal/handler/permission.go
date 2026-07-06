@@ -5,12 +5,13 @@ package handler
 import (
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"gva/internal/middleware"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/pagination"
 	"gva/internal/pkg/response"
 	"gva/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 // permissionCreateReq 创建/更新共用请求体。
@@ -41,6 +42,18 @@ func NewPermissionHandler(svc *service.PermissionService) *PermissionHandler {
 // List GET /api/permission
 // 支持 page/size/keyword/status（走 pagination.Query）与 module（独立 query）。
 // all=true/1 走 ListAll 返回全量数组，否则走分页。
+// @Summary      权限列表
+// @Tags         permission
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page    query int    false "页码"  default(1)
+// @Param        size    query int    false "每页"  default(10)
+// @Param        keyword query string false "名称/编码关键词"
+// @Param        status  query string false "状态"  Enums(active, inactive)
+// @Param        module  query string false "模块"
+// @Param        all     query string false "all=true 返回全量"  Enums(true, 1)
+// @Success      200  {object} response.ApiResult
+// @Router       /permission [get]
 func (h *PermissionHandler) List(c *gin.Context) {
 	var q pagination.Query
 	if err := c.ShouldBindQuery(&q); err != nil {
@@ -68,6 +81,15 @@ func (h *PermissionHandler) List(c *gin.Context) {
 
 // Export GET /api/permission/export
 // 返回 CSV 文本（含表头），仍受 module/status/keyword 过滤。
+// @Summary      导出权限 CSV
+// @Tags         permission
+// @Produce      json
+// @Security     BearerAuth
+// @Param        keyword query string false "关键词"
+// @Param        status  query string false "状态"
+// @Param        module  query string false "模块"
+// @Success      200  {object} response.ApiResult
+// @Router       /permission/export [get]
 func (h *PermissionHandler) Export(c *gin.Context) {
 	var q pagination.Query
 	_ = c.ShouldBindQuery(&q)
@@ -81,6 +103,14 @@ func (h *PermissionHandler) Export(c *gin.Context) {
 }
 
 // Get GET /api/permission/:id
+// @Summary      权限详情
+// @Tags         permission
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path int true "权限 ID"
+// @Success      200  {object} response.ApiResult
+// @Failure      404  {object} response.ProblemDetail
+// @Router       /permission/{id} [get]
 func (h *PermissionHandler) Get(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -96,6 +126,16 @@ func (h *PermissionHandler) Get(c *gin.Context) {
 }
 
 // Create POST /api/permission
+// @Summary      创建权限
+// @Tags         permission
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body permissionCreateReq true "权限信息"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Failure      409  {object} response.ProblemDetail "编码已存在"
+// @Router       /permission [post]
 func (h *PermissionHandler) Create(c *gin.Context) {
 	var req permissionCreateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -114,6 +154,17 @@ func (h *PermissionHandler) Create(c *gin.Context) {
 
 // Update PUT /api/permission/:id
 // 先查再改字段再更新：service.Update 接收完整实体。
+// @Summary      更新权限
+// @Tags         permission
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id      path int true "权限 ID"
+// @Param        request body permissionCreateReq true "权限信息"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Failure      404  {object} response.ProblemDetail
+// @Router       /permission/{id} [put]
 func (h *PermissionHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -146,6 +197,14 @@ func (h *PermissionHandler) Update(c *gin.Context) {
 }
 
 // Delete DELETE /api/permission/:id
+// @Summary      删除权限
+// @Tags         permission
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path int true "权限 ID"
+// @Success      200  {object} response.ApiResult
+// @Failure      404  {object} response.ProblemDetail
+// @Router       /permission/{id} [delete]
 func (h *PermissionHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -162,6 +221,15 @@ func (h *PermissionHandler) Delete(c *gin.Context) {
 }
 
 // BatchDelete DELETE /api/permission
+// @Summary      批量删除权限
+// @Tags         permission
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body batchDeleteReq true "ID 列表"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Router       /permission [delete]
 func (h *PermissionHandler) BatchDelete(c *gin.Context) {
 	var req batchDeleteReq
 	if err := c.ShouldBindJSON(&req); err != nil {

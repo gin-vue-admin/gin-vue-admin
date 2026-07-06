@@ -6,15 +6,18 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"gva/internal/config"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // TokenType token 用途标识。
 type TokenType string
 
 const (
-	TypeAccess  TokenType = "access"
+	// TypeAccess 访问令牌，用于 API 鉴权。
+	TypeAccess TokenType = "access"
+	// TypeRefresh 刷新令牌，用于换取新的访问令牌。
 	TypeRefresh TokenType = "refresh"
 )
 
@@ -75,6 +78,18 @@ func (m *Manager) GenerateAccess(userID uint, username string) (string, error) {
 // GenerateRefresh 签发 refresh token。
 func (m *Manager) GenerateRefresh(userID uint, username string) (string, error) {
 	return m.issue(userID, username, TypeRefresh, m.refreshTTL)
+}
+
+// SetAccessTTL 动态设置 access token 有效期（秒）。供 sys_config token_expire_seconds 接入。
+func (m *Manager) SetAccessTTL(seconds int) {
+	if seconds > 0 {
+		m.accessTTL = time.Duration(seconds) * time.Second
+	}
+}
+
+// AccessTTL 返回当前 access token 有效期（秒）。
+func (m *Manager) AccessTTL() int {
+	return int(m.accessTTL / time.Second)
 }
 
 // ErrInvalidToken token 无效或过期。

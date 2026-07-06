@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"gva/internal/pkg/response"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gva/internal/pkg/response"
 )
 
 // TraceID 为每个请求注入/透传 traceId，写入上下文与响应头。

@@ -5,9 +5,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 	"gva/internal/config"
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
@@ -15,16 +12,22 @@ import (
 	"gva/internal/pkg/jwt"
 	"gva/internal/repository"
 	"gva/internal/testutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 func newAuthSvc(t *testing.T) (*AuthService, *gorm.DB) {
 	t.Helper()
 	db := testutil.NewTestDB(t)
 	repo := repository.NewUserRepository(db)
+	require.NoError(t, db.AutoMigrate(&model.LoginLog{})) // M8 登录日志表
+	loginLogRepo := repository.NewLoginLogRepository(db)
 	jwtMgr := jwt.NewManager(config.JWTConfig{
 		Secret: "test-secret", AccessTTL: 3600, RefreshTTL: 604800, Issuer: "gva-test",
 	})
-	return NewAuthService(repo, db, jwtMgr, async.SyncRunner{}), db
+	return NewAuthService(repo, db, jwtMgr, async.SyncRunner{}, loginLogRepo), db
 }
 
 // TestSeed_Idempotent 验证 Seed 幂等：调两次不报错、不重复，
@@ -69,7 +72,7 @@ func setupSeeded(t *testing.T) *AuthService {
 // TestLogin_Success 正确凭据应签发 access/refresh token，ExpiresIn=3600。
 func TestLogin_Success(t *testing.T) {
 	svc := setupSeeded(t)
-	res, err := svc.Login(context.Background(), "admin", "123456")
+	res, err := svc.Login(context.Background(), "admin", "123456", "1.1.1.1", "ua-test")
 	require.NoError(t, err)
 	assert.NotEmpty(t, res.AccessToken)
 	assert.NotEmpty(t, res.RefreshToken)
@@ -79,7 +82,7 @@ func TestLogin_Success(t *testing.T) {
 // TestLogin_WrongPassword 密码错返回 401，文案为"用户名或密码错误"。
 func TestLogin_WrongPassword(t *testing.T) {
 	svc := setupSeeded(t)
-	_, err := svc.Login(context.Background(), "admin", "wrong")
+	_, err := svc.Login(context.Background(), "admin", "wrong", "1.1.1.1", "ua-test")
 	require.Error(t, err)
 	e, ok := apperr.As(err)
 	require.True(t, ok)
@@ -90,7 +93,7 @@ func TestLogin_WrongPassword(t *testing.T) {
 // TestLogin_UserNotFound 用户不存在时返回与密码错同一文案，防用户枚举。
 func TestLogin_UserNotFound(t *testing.T) {
 	svc := setupSeeded(t)
-	_, err := svc.Login(context.Background(), "nobody", "123456")
+	_, err := svc.Login(context.Background(), "nobody", "123456", "1.1.1.1", "ua-test")
 	require.Error(t, err)
 	// 防枚举：与密码错同一文案
 	e, _ := apperr.As(err)
@@ -103,7 +106,7 @@ func TestLogin_DisabledUser(t *testing.T) {
 	require.NoError(t, svc.Seed(context.Background()))
 	// 禁用 admin
 	db.Model(&model.User{}).Where("username = ?", "admin").Update("status", "disabled")
-	_, err := svc.Login(context.Background(), "admin", "123456")
+	_, err := svc.Login(context.Background(), "admin", "123456", "1.1.1.1", "ua-test")
 	require.Error(t, err)
 	e, _ := apperr.As(err)
 	assert.Equal(t, 401, e.Status)
@@ -113,7 +116,7 @@ func TestLogin_DisabledUser(t *testing.T) {
 func TestRefresh_Success(t *testing.T) {
 	svc := setupSeeded(t)
 	// 先登录拿 refresh
-	res, err := svc.Login(context.Background(), "admin", "123456")
+	res, err := svc.Login(context.Background(), "admin", "123456", "1.1.1.1", "ua-test")
 	require.NoError(t, err)
 	// 刷新
 	res2, err := svc.Refresh(context.Background(), res.RefreshToken)
@@ -126,7 +129,7 @@ func TestRefresh_Success(t *testing.T) {
 // TestRefresh_WithAccessTokenFails 用 access token 冒充 refresh 应被拒（类型校验）。
 func TestRefresh_WithAccessTokenFails(t *testing.T) {
 	svc := setupSeeded(t)
-	res, err := svc.Login(context.Background(), "admin", "123456")
+	res, err := svc.Login(context.Background(), "admin", "123456", "1.1.1.1", "ua-test")
 	require.NoError(t, err)
 	// 用 access token 去刷新应失败
 	_, err = svc.Refresh(context.Background(), res.AccessToken)
@@ -146,7 +149,7 @@ func TestRefresh_InvalidTokenFails(t *testing.T) {
 func TestGetProfile_NormalUser(t *testing.T) {
 	svc := setupSeeded(t)
 	// user 账户登录后取 id
-	res, _ := svc.Login(context.Background(), "user", "123456")
+	res, _ := svc.Login(context.Background(), "user", "123456", "1.1.1.1", "ua-test")
 	// 从 access token 解析 uid
 	claims, err := svc.jwtMgr.Parse(res.AccessToken)
 	require.NoError(t, err)
@@ -161,7 +164,7 @@ func TestGetProfile_NormalUser(t *testing.T) {
 // 关键：判断依据是权限码 "*" 而非角色名，超管语义在权限码层短路。
 func TestGetProfile_SuperAdminWildcard(t *testing.T) {
 	svc := setupSeeded(t)
-	res, _ := svc.Login(context.Background(), "admin", "123456")
+	res, _ := svc.Login(context.Background(), "admin", "123456", "1.1.1.1", "ua-test")
 	claims, _ := svc.jwtMgr.Parse(res.AccessToken)
 	prof, err := svc.GetProfile(context.Background(), claims.UserID)
 	require.NoError(t, err)
@@ -173,4 +176,37 @@ func TestGetProfile_SuperAdminWildcard(t *testing.T) {
 func TestLogout_NoOp(t *testing.T) {
 	svc := setupSeeded(t)
 	assert.NoError(t, svc.Logout(context.Background()))
+}
+
+// TestLogin_RecordsLoginLog 登录日志审计：成功/失败尝试均异步落库（SyncRunner 同步执行）。
+// 成功 → status=success, reason 空；密码错 → status=failed, reason="密码错误"；用户不存在 → reason="用户不存在"。
+// 关键：响应文案防枚举（统一"用户名或密码错误"），但日志记真实原因供内部审计。
+func TestLogin_RecordsLoginLog(t *testing.T) {
+	svc, db := newAuthSvc(t)
+	require.NoError(t, svc.Seed(context.Background()))
+	ctx := context.Background()
+
+	_, err := svc.Login(ctx, "admin", "123456", "10.0.0.1", "Mozilla/5.0")
+	require.NoError(t, err)
+	_, err = svc.Login(ctx, "admin", "wrong", "10.0.0.2", "curl/8")
+	require.Error(t, err)
+	_, err = svc.Login(ctx, "ghost", "123456", "10.0.0.3", "curl/8")
+	require.Error(t, err)
+
+	var logs []model.LoginLog
+	db.Order("id asc").Find(&logs)
+	require.Len(t, logs, 3)
+
+	assert.Equal(t, "admin", logs[0].Username)
+	assert.Equal(t, "success", logs[0].Status)
+	assert.Equal(t, "10.0.0.1", logs[0].IP)
+	assert.Empty(t, logs[0].Reason)
+
+	assert.Equal(t, "failed", logs[1].Status)
+	assert.Equal(t, "密码错误", logs[1].Reason)
+	assert.Equal(t, "10.0.0.2", logs[1].IP)
+
+	assert.Equal(t, "failed", logs[2].Status)
+	assert.Equal(t, "用户不存在", logs[2].Reason)
+	assert.Equal(t, "ghost", logs[2].Username) // 记录尝试的用户名，便于安全审计
 }

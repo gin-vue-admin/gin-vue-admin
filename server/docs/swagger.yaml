@@ -1,0 +1,2578 @@
+basePath: /api
+definitions:
+  gva_internal_pkg_response.ApiResult:
+    properties:
+      code:
+        type: integer
+      data: {}
+      msg:
+        type: string
+      traceId:
+        type: string
+    type: object
+  gva_internal_pkg_response.ProblemDetail:
+    properties:
+      code:
+        description: 应用层错误码（机器可读）
+        type: string
+      detail:
+        description: 具体说明
+        type: string
+      errors:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        description: 字段级错误（表单校验）
+        type: object
+      instance:
+        type: string
+      status:
+        description: HTTP 状态码
+        type: integer
+      title:
+        description: 简短摘要
+        type: string
+      traceId:
+        type: string
+      type:
+        description: 问题类型 URI
+        type: string
+    type: object
+  gva_internal_service.AuthResult:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+      refreshToken:
+        type: string
+    type: object
+  gva_internal_service.DeptUpsertReq:
+    properties:
+      email:
+        type: string
+      leader:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      phone:
+        type: string
+      sort:
+        type: integer
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    required:
+    - name
+    - status
+    type: object
+  gva_internal_service.DictCategoryUpsertReq:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    required:
+    - code
+    - name
+    - status
+    type: object
+  gva_internal_service.DictItemUpsertReq:
+    properties:
+      code:
+        type: string
+      dictId:
+        type: integer
+      name:
+        type: string
+      sort:
+        type: integer
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+      value:
+        type: string
+    required:
+    - code
+    - dictId
+    - name
+    - status
+    type: object
+  gva_internal_service.DictUpsertReq:
+    properties:
+      categoryId:
+        type: integer
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    required:
+    - categoryId
+    - code
+    - name
+    - status
+    type: object
+  gva_internal_service.MenuCreateReq:
+    properties:
+      component:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+      path:
+        type: string
+      sort:
+        type: integer
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+      title:
+        type: string
+    required:
+    - name
+    - path
+    - status
+    - title
+    type: object
+  gva_internal_service.MenuSortReq:
+    properties:
+      draggingId:
+        type: integer
+      position:
+        type: string
+      targetId:
+        type: integer
+    type: object
+  gva_internal_service.UserCreateReq:
+    properties:
+      email:
+        maxLength: 128
+        type: string
+      password:
+        maxLength: 72
+        minLength: 6
+        type: string
+      phone:
+        maxLength: 32
+        type: string
+      realName:
+        maxLength: 64
+        type: string
+      roles:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+      username:
+        maxLength: 64
+        minLength: 3
+        type: string
+    required:
+    - password
+    - roles
+    - status
+    - username
+    type: object
+  gva_internal_service.UserUpdateReq:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      realName:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+    type: object
+  internal_handler.LoginRequest:
+    properties:
+      password:
+        description: bcrypt 72 字节上限是硬约束，密码校验不泄露用户名信息。
+        maxLength: 72
+        minLength: 6
+        type: string
+      username:
+        description: |-
+          登录仅校验非空：长度约束留给注册（M3）。
+          在此加 min 长度会让短用户名在 service 之前返回 400，与用户不存在的 401 形成可区分信号，
+          破坏纯防枚举（攻击者可推断用户名长度策略）。
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  internal_handler.RefreshRequest:
+    properties:
+      refreshToken:
+        type: string
+    required:
+    - refreshToken
+    type: object
+  internal_handler.batchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.crudBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.crudUpsertReq:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      date:
+        type: string
+      name:
+        type: string
+      province:
+        type: string
+      zip:
+        type: integer
+    required:
+    - name
+    type: object
+  internal_handler.deptBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.dictBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.loginLogBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.opLogBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.permissionCreateReq:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      module:
+        type: string
+      name:
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    required:
+    - code
+    - module
+    - name
+    - status
+    type: object
+  internal_handler.roleBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+  internal_handler.roleCreateReq:
+    properties:
+      code:
+        type: string
+      dataScope:
+        enum:
+        - all
+        - dept
+        - dept_and_sub
+        - self
+        type: string
+      description:
+        maxLength: 255
+        type: string
+      name:
+        type: string
+      status:
+        enum:
+        - active
+        - inactive
+        type: string
+    required:
+    - code
+    - name
+    - status
+    type: object
+  internal_handler.setPermissionsReq:
+    properties:
+      permissions:
+        items:
+          type: string
+        type: array
+    required:
+    - permissions
+    type: object
+  internal_handler.sysConfigUpsertReq:
+    properties:
+      configKey:
+        maxLength: 128
+        type: string
+      configName:
+        maxLength: 128
+        type: string
+      configValue:
+        type: string
+      remark:
+        type: string
+      type:
+        type: string
+    required:
+    - configKey
+    type: object
+  internal_handler.userBatchDeleteReq:
+    properties:
+      ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
+host: localhost:8088
+info:
+  contact: {}
+  description: |-
+    业界优秀的通用管理框架基座（非业务系统）：RBAC 权限、菜单、部门、字典、操作日志、登录日志、数据范围、系统配置。
+    清洁架构 handler → service → repository → model，复用泛型 Repository 基类。
+  title: GVA 通用管理框架基座 API
+  version: "1.0"
+paths:
+  /auth/sessions:
+    delete:
+      description: 纯 JWT 模式下为空操作，前端清本地 storage 即可
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      summary: 注销
+      tags:
+      - auth
+    post:
+      consumes:
+      - application/json
+      description: 用户名密码换取访问令牌与刷新令牌；失败响应文案统一防枚举，真实原因记入登录日志
+      parameters:
+      - description: 登录凭据
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+            - properties:
+                data:
+                  $ref: '#/definitions/gva_internal_service.AuthResult'
+              type: object
+        "400":
+          description: 参数校验失败
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "401":
+          description: 用户名或密码错误
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      summary: 登录
+      tags:
+      - auth
+  /auth/tokens/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 用刷新令牌换取新的访问令牌
+      parameters:
+      - description: 刷新令牌
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+            - properties:
+                data:
+                  $ref: '#/definitions/gva_internal_service.AuthResult'
+              type: object
+        "401":
+          description: 刷新令牌无效或过期
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      summary: 刷新令牌
+      tags:
+      - auth
+  /auth/users/me:
+    get:
+      description: 返回当前登录用户的档案、角色与权限码
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 当前用户档案
+      tags:
+      - auth
+  /crud:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.crudBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: CRUD 范例批量删除
+      tags:
+      - crud
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: current
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 名称关键词
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: CRUD 范例分页列表
+      tags:
+      - crud
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 条目
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.crudUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: CRUD 范例创建
+      tags:
+      - crud
+  /crud/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: CRUD 范例删除
+      tags:
+      - crud
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: CRUD 范例详情
+      tags:
+      - crud
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 条目
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.crudUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: CRUD 范例更新
+      tags:
+      - crud
+  /dict/categories:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.dictBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除字典分类
+      tags:
+      - dict-category
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 名称/编码关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 字典分类分页列表
+      tags:
+      - dict-category
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 分类信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DictCategoryUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 创建字典分类
+      tags:
+      - dict-category
+  /dict/categories/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 删除字典分类
+      tags:
+      - dict-category
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 字典分类详情
+      tags:
+      - dict-category
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 分类信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DictCategoryUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 更新字典分类
+      tags:
+      - dict-category
+  /dict/categories/export:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出字典分类 CSV
+      tags:
+      - dict-category
+  /dict/dicts:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.dictBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除字典
+      tags:
+      - dict
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 名称/编码关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 分类 ID
+        in: query
+        name: categoryId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 字典分页列表
+      tags:
+      - dict
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DictUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 创建字典
+      tags:
+      - dict
+  /dict/dicts/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 删除字典
+      tags:
+      - dict
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 字典详情
+      tags:
+      - dict
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 字典信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DictUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 更新字典
+      tags:
+      - dict
+  /dict/dicts/export:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出字典 CSV
+      tags:
+      - dict
+  /dict/items:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.dictBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除字典项
+      tags:
+      - dict-item
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 名称/编码关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 字典 ID
+        in: query
+        name: dictId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 字典项分页列表
+      tags:
+      - dict-item
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 字典项信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DictItemUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 创建字典项
+      tags:
+      - dict-item
+  /dict/items/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 删除字典项
+      tags:
+      - dict-item
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 字典项详情
+      tags:
+      - dict-item
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 字典项信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DictItemUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 更新字典项
+      tags:
+      - dict-item
+  /dict/items/export:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出字典项 CSV
+      tags:
+      - dict-item
+  /health:
+    get:
+      description: 探活端点，无需鉴权
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      summary: 健康检查
+      tags:
+      - system
+  /permission:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.batchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 批量删除权限
+      tags:
+      - permission
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 名称/编码关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        enum:
+        - active
+        - inactive
+        in: query
+        name: status
+        type: string
+      - description: 模块
+        in: query
+        name: module
+        type: string
+      - description: all=true 返回全量
+        enum:
+        - "true"
+        - "1"
+        in: query
+        name: all
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 权限列表
+      tags:
+      - permission
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 权限信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.permissionCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 编码已存在
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 创建权限
+      tags:
+      - permission
+  /permission/{id}:
+    delete:
+      parameters:
+      - description: 权限 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 删除权限
+      tags:
+      - permission
+    get:
+      parameters:
+      - description: 权限 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 权限详情
+      tags:
+      - permission
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 权限 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 权限信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.permissionCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 更新权限
+      tags:
+      - permission
+  /permission/export:
+    get:
+      parameters:
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 模块
+        in: query
+        name: module
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出权限 CSV
+      tags:
+      - permission
+  /role:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.roleBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除角色
+      tags:
+      - role
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 名称/编码关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        enum:
+        - active
+        - inactive
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 角色分页列表
+      tags:
+      - role
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 角色信息（含 dataScope）
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.roleCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 编码已存在
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 创建角色
+      tags:
+      - role
+  /role/{id}:
+    delete:
+      parameters:
+      - description: 角色 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 角色已分配用户
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 删除角色
+      tags:
+      - role
+    get:
+      parameters:
+      - description: 角色 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 角色详情
+      tags:
+      - role
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 角色 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 角色信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.roleCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 更新角色
+      tags:
+      - role
+  /role/{id}/permissions:
+    get:
+      parameters:
+      - description: 角色 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 查询角色权限
+      tags:
+      - role
+    put:
+      consumes:
+      - application/json
+      description: 全量覆盖角色的权限 code 集合，成功后失效权限缓存
+      parameters:
+      - description: 角色 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 权限 code 数组
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.setPermissionsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 分配角色权限
+      tags:
+      - role
+  /role/export:
+    get:
+      parameters:
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出角色 CSV
+      tags:
+      - role
+  /system/config:
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: key/name 关键词
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 系统配置分页列表
+      tags:
+      - sys-config
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 配置信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.sysConfigUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "409":
+          description: key 已存在
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 创建系统配置
+      tags:
+      - sys-config
+  /system/config/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 删除系统配置
+      tags:
+      - sys-config
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 系统配置详情（按 ID）
+      tags:
+      - sys-config
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 配置信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.sysConfigUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 更新系统配置
+      tags:
+      - sys-config
+  /system/config/key/{key}:
+    get:
+      parameters:
+      - description: 配置 key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 按 key 取配置
+      tags:
+      - sys-config
+  /system/dept:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.deptBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除部门
+      tags:
+      - dept
+    get:
+      parameters:
+      - description: 名称关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        enum:
+        - active
+        - inactive
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 部门树
+      tags:
+      - dept
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 部门信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DeptUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 创建部门
+      tags:
+      - dept
+  /system/dept/{id}:
+    delete:
+      parameters:
+      - description: 部门 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 存在子部门或关联用户
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 删除部门（级联子孙）
+      tags:
+      - dept
+    get:
+      parameters:
+      - description: 部门 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 部门详情
+      tags:
+      - dept
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 部门 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 部门信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.DeptUpsertReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 更新部门
+      tags:
+      - dept
+  /system/dept/export:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出部门 CSV
+      tags:
+      - dept
+  /system/login-log:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.loginLogBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除登录日志
+      tags:
+      - login-log
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 用户名/IP 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: success/failed
+        in: query
+        name: status
+        type: string
+      - description: 起始时间
+        in: query
+        name: startTime
+        type: string
+      - description: 结束时间
+        in: query
+        name: endTime
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 登录日志分页列表
+      tags:
+      - login-log
+  /system/login-log/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 删除登录日志
+      tags:
+      - login-log
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 登录日志详情
+      tags:
+      - login-log
+  /system/login-log/clear:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 清空登录日志
+      tags:
+      - login-log
+  /system/menu:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 管理用菜单树
+      tags:
+      - menu
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 菜单信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.MenuCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 创建菜单
+      tags:
+      - menu
+  /system/menu/{id}:
+    delete:
+      parameters:
+      - description: 菜单 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 删除菜单（级联子孙）
+      tags:
+      - menu
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 菜单 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 菜单信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.MenuCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 更新菜单
+      tags:
+      - menu
+  /system/menu/sort:
+    patch:
+      consumes:
+      - application/json
+      description: 按 inner/before/after 三种落点重排菜单层级与顺序
+      parameters:
+      - description: 排序参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.MenuSortReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 菜单拖拽排序
+      tags:
+      - menu
+  /system/menus:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 当前用户菜单树
+      tags:
+      - menu
+  /system/operation-log:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.opLogBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 批量删除操作日志
+      tags:
+      - operation-log
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 用户名/方法/路径关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态码
+        in: query
+        name: status
+        type: string
+      - description: 起始时间
+        in: query
+        name: startTime
+        type: string
+      - description: 结束时间
+        in: query
+        name: endTime
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 操作日志分页列表
+      tags:
+      - operation-log
+  /system/operation-log/{id}:
+    delete:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 删除操作日志
+      tags:
+      - operation-log
+    get:
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 操作日志详情
+      tags:
+      - operation-log
+  /system/operation-log/clear:
+    delete:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 清空操作日志
+      tags:
+      - operation-log
+  /user:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户 ID 列表
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.userBatchDeleteReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 含自己
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 批量删除用户
+      tags:
+      - user
+    get:
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页
+        in: query
+        name: size
+        type: integer
+      - description: 用户名/姓名/手机号关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        enum:
+        - active
+        - inactive
+        in: query
+        name: status
+        type: string
+      - description: 角色编码过滤
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 用户分页列表
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.UserCreateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "404":
+          description: 角色不存在
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 用户名已存在
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 创建用户
+      tags:
+      - user
+  /user/{id}:
+    delete:
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 删除自己
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 删除用户（软删）
+      tags:
+      - user
+    get:
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 用户详情
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 用户 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 用户更新字段（指针字段 nil 不改）
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gva_internal_service.UserUpdateReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+        "409":
+          description: 禁用/删除自己
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ProblemDetail'
+      security:
+      - BearerAuth: []
+      summary: 更新用户
+      tags:
+      - user
+  /user/export:
+    get:
+      parameters:
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 角色编码
+        in: query
+        name: role
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gva_internal_pkg_response.ApiResult'
+      security:
+      - BearerAuth: []
+      summary: 导出用户 CSV
+      tags:
+      - user
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: '"Bearer {accessToken}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -5,10 +5,11 @@ import (
 	"errors"
 	"sort"
 
-	"gorm.io/gorm"
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
 	"gva/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 // MenuDTO 对齐前端 lib/router/types-menu.ts。
@@ -239,17 +240,18 @@ func (s *MenuService) Sort(ctx context.Context, req *MenuSortReq) error {
 			}
 		}
 	}
-	if req.Position == "before" {
+	switch req.Position {
+	case "before":
 		// 插入 target 前
 		siblings = append(siblings, model.Menu{})
 		copy(siblings[targetIdx+1:], siblings[targetIdx:])
 		siblings[targetIdx] = *dragging
-	} else if req.Position == "after" {
+	case "after":
 		// 插入 target 后
 		siblings = append(siblings, model.Menu{})
 		copy(siblings[targetIdx+2:], siblings[targetIdx+1:])
 		siblings[targetIdx+1] = *dragging
-	} else {
+	default:
 		// inner: dragging 变 target 子节点，追加到同级末尾后重排（写回新 ParentID）
 		siblings = append(siblings, *dragging)
 	}

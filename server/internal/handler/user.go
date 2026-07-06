@@ -3,12 +3,13 @@ package handler
 import (
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"gva/internal/middleware"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/pagination"
 	"gva/internal/pkg/response"
 	"gva/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 // userBatchDeleteReq 批量删除请求；命名加 user 前缀避免与 permission/role 同包冲突。
@@ -39,6 +40,20 @@ func operatorID(c *gin.Context) uint {
 }
 
 // List GET /api/user 分页列表（含 roles 数组）。
+// 受数据范围约束：按当前用户角色 DataScope 过滤可见用户。
+// @Summary      用户分页列表
+// @Tags         user
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page      query int    false "页码"   default(1)
+// @Param        size      query int    false "每页"   default(10)
+// @Param        keyword   query string false "用户名/姓名/手机号关键词"
+// @Param        status    query string false "状态"   Enums(active, inactive)
+// @Param        role      query string false "角色编码过滤"
+// @Success      200  {object} response.ApiResult
+// @Failure      401  {object} response.ProblemDetail
+// @Failure      403  {object} response.ProblemDetail
+// @Router       /user [get]
 func (h *UserHandler) List(c *gin.Context) {
 	var q pagination.Query
 	if err := c.ShouldBindQuery(&q); err != nil {
@@ -55,6 +70,15 @@ func (h *UserHandler) List(c *gin.Context) {
 }
 
 // Export GET /api/user/export 导出 CSV。
+// @Summary      导出用户 CSV
+// @Tags         user
+// @Produce      json
+// @Security     BearerAuth
+// @Param        keyword query string false "关键词"
+// @Param        status  query string false "状态"
+// @Param        role    query string false "角色编码"
+// @Success      200  {object} response.ApiResult
+// @Router       /user/export [get]
 func (h *UserHandler) Export(c *gin.Context) {
 	var q pagination.Query
 	_ = c.ShouldBindQuery(&q)
@@ -68,6 +92,15 @@ func (h *UserHandler) Export(c *gin.Context) {
 }
 
 // Get GET /api/user/:id 详情。
+// @Summary      用户详情
+// @Tags         user
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path int true "用户 ID"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Failure      404  {object} response.ProblemDetail
+// @Router       /user/{id} [get]
 func (h *UserHandler) Get(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -83,6 +116,17 @@ func (h *UserHandler) Get(c *gin.Context) {
 }
 
 // Create POST /api/user 创建用户（含密码哈希+角色绑定）。
+// @Summary      创建用户
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body service.UserCreateReq true "用户信息"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Failure      404  {object} response.ProblemDetail "角色不存在"
+// @Failure      409  {object} response.ProblemDetail "用户名已存在"
+// @Router       /user [post]
 func (h *UserHandler) Create(c *gin.Context) {
 	var req service.UserCreateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -98,6 +142,18 @@ func (h *UserHandler) Create(c *gin.Context) {
 }
 
 // Update PUT /api/user/:id 更新（指针字段 nil 不改；传 operatorID 防自禁）。
+// @Summary      更新用户
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id      path int true "用户 ID"
+// @Param        request body service.UserUpdateReq true "用户更新字段（指针字段 nil 不改）"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Failure      404  {object} response.ProblemDetail
+// @Failure      409  {object} response.ProblemDetail "禁用/删除自己"
+// @Router       /user/{id} [put]
 func (h *UserHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -118,6 +174,15 @@ func (h *UserHandler) Update(c *gin.Context) {
 }
 
 // Delete DELETE /api/user/:id 软删（传 operatorID 防自删）。
+// @Summary      删除用户（软删）
+// @Tags         user
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path int true "用户 ID"
+// @Success      200  {object} response.ApiResult
+// @Failure      404  {object} response.ProblemDetail
+// @Failure      409  {object} response.ProblemDetail "删除自己"
+// @Router       /user/{id} [delete]
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -132,6 +197,16 @@ func (h *UserHandler) Delete(c *gin.Context) {
 }
 
 // BatchDelete DELETE /api/user 批量软删（任一 id==operatorID→409）。
+// @Summary      批量删除用户
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body userBatchDeleteReq true "用户 ID 列表"
+// @Success      200  {object} response.ApiResult
+// @Failure      400  {object} response.ProblemDetail
+// @Failure      409  {object} response.ProblemDetail "含自己"
+// @Router       /user [delete]
 func (h *UserHandler) BatchDelete(c *gin.Context) {
 	var req userBatchDeleteReq
 	if err := c.ShouldBindJSON(&req); err != nil {

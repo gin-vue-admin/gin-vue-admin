@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gva/internal/model"
 	"gva/internal/repository"
 	"gva/internal/testutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMenuService_GetMenus_FullTree(t *testing.T) {
@@ -39,7 +40,7 @@ func TestMenuService_GetMenus_FullTree(t *testing.T) {
 		}
 	}
 	require.NotNil(t, systemNode)
-	assert.Len(t, systemNode.Children, 2)                 // systemUser + systemRole
+	assert.Len(t, systemNode.Children, 2)                      // systemUser + systemRole
 	assert.Equal(t, "systemUser", systemNode.Children[0].Name) // sort 0 在前
 	assert.Equal(t, "systemRole", systemNode.Children[1].Name) // sort 10 在后
 }

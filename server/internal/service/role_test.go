@@ -8,13 +8,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/pagination"
 	"gva/internal/repository"
 	"gva/internal/testutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestRoleService_Create 正常创建返回带 ID 的角色。
@@ -23,7 +24,7 @@ func TestRoleService_Create(t *testing.T) {
 	repo := repository.NewRoleRepository(db)
 	svc := NewRoleService(repo)
 	ctx := context.Background()
-	r, err := svc.Create(ctx, "角色1", "r1", "描述", "active")
+	r, err := svc.Create(ctx, "角色1", "r1", "描述", "active", "")
 	require.NoError(t, err)
 	assert.NotZero(t, r.ID)
 }
@@ -34,8 +35,8 @@ func TestRoleService_Create_DuplicateCode(t *testing.T) {
 	repo := repository.NewRoleRepository(db)
 	svc := NewRoleService(repo)
 	ctx := context.Background()
-	_, _ = svc.Create(ctx, "n", "dup", "", "active")
-	_, err := svc.Create(ctx, "n2", "dup", "", "active")
+	_, _ = svc.Create(ctx, "n", "dup", "", "active", "")
+	_, err := svc.Create(ctx, "n2", "dup", "", "active", "")
 	require.Error(t, err)
 	e, ok := apperr.As(err)
 	require.True(t, ok)
@@ -61,7 +62,7 @@ func TestRoleService_List(t *testing.T) {
 	svc := NewRoleService(repo)
 	ctx := context.Background()
 	for i := 0; i < 12; i++ {
-		_, err := svc.Create(ctx, "n", fmt.Sprintf("c%d", i), "", "active")
+		_, err := svc.Create(ctx, "n", fmt.Sprintf("c%d", i), "", "active", "")
 		require.NoError(t, err)
 	}
 	q := pagination.Query{Page: 1, Size: 10}
@@ -79,7 +80,7 @@ func TestRoleService_Delete_ClearsAssociations(t *testing.T) {
 	repo := repository.NewRoleRepository(db)
 	svc := NewRoleService(repo)
 	ctx := context.Background()
-	r, _ := svc.Create(ctx, "n", "r1", "", "active")
+	r, _ := svc.Create(ctx, "n", "r1", "", "active", "")
 	// 关联权限
 	perm := &model.Permission{Code: "p1", Name: "p", Type: "api", Status: "active"}
 	db.Create(perm)
@@ -96,7 +97,7 @@ func TestRoleService_SetPermissions_UnknownCode(t *testing.T) {
 	repo := repository.NewRoleRepository(db)
 	svc := NewRoleService(repo)
 	ctx := context.Background()
-	r, _ := svc.Create(ctx, "n", "r1", "", "active")
+	r, _ := svc.Create(ctx, "n", "r1", "", "active", "")
 	err := svc.SetPermissions(ctx, r.ID, []string{"unknown"})
 	require.Error(t, err)
 	e, _ := apperr.As(err)
@@ -109,7 +110,7 @@ func TestRoleService_SetPermissions_Success(t *testing.T) {
 	repo := repository.NewRoleRepository(db)
 	svc := NewRoleService(repo)
 	ctx := context.Background()
-	r, _ := svc.Create(ctx, "n", "r1", "", "active")
+	r, _ := svc.Create(ctx, "n", "r1", "", "active", "")
 	perm := &model.Permission{Code: "p1", Name: "p", Type: "api", Status: "active"}
 	db.Create(perm)
 	require.NoError(t, svc.SetPermissions(ctx, r.ID, []string{"p1"}))
@@ -124,7 +125,7 @@ func TestRoleService_Export(t *testing.T) {
 	repo := repository.NewRoleRepository(db)
 	svc := NewRoleService(repo)
 	ctx := context.Background()
-	_, err := svc.Create(ctx, "管理员", "r1", "描述", "active")
+	_, err := svc.Create(ctx, "管理员", "r1", "描述", "active", "")
 	require.NoError(t, err)
 	q := pagination.Query{}
 	q.Normalize()

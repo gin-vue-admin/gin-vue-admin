@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
 	"gva/internal/middleware"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/response"
 	"gva/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 // LoginRequest 登录请求体。
@@ -34,13 +35,23 @@ func NewAuthHandler(svc *service.AuthService) *AuthHandler {
 }
 
 // Login POST /api/auth/sessions
+// @Summary      登录
+// @Description  用户名密码换取访问令牌与刷新令牌；失败响应文案统一防枚举，真实原因记入登录日志
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body LoginRequest true "登录凭据"
+// @Success      200  {object} response.ApiResult{data=service.AuthResult}
+// @Failure      400  {object} response.ProblemDetail "参数校验失败"
+// @Failure      401  {object} response.ProblemDetail "用户名或密码错误"
+// @Router       /auth/sessions [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		apperr.Write(c, apperr.Validation(err.Error(), nil))
 		return
 	}
-	res, err := h.svc.Login(c.Request.Context(), req.Username, req.Password)
+	res, err := h.svc.Login(c.Request.Context(), req.Username, req.Password, c.ClientIP(), c.Request.UserAgent())
 	if err != nil {
 		apperr.Write(c, err)
 		return
@@ -49,6 +60,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 // Refresh POST /api/auth/tokens/refresh
+// @Summary      刷新令牌
+// @Description  用刷新令牌换取新的访问令牌
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body RefreshRequest true "刷新令牌"
+// @Success      200  {object} response.ApiResult{data=service.AuthResult}
+// @Failure      401  {object} response.ProblemDetail "刷新令牌无效或过期"
+// @Router       /auth/tokens/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -65,6 +85,12 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 
 // Logout DELETE /api/auth/sessions
 // 纯 JWT 模式下为空操作，前端清本地 storage 即可。
+// @Summary      注销
+// @Description  纯 JWT 模式下为空操作，前端清本地 storage 即可
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object} response.ApiResult
+// @Router       /auth/sessions [delete]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	_ = h.svc.Logout(c.Request.Context())
 	response.Success(c, nil)
@@ -72,6 +98,14 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 // Me GET /api/auth/users/me
 // 从中间件注入的 userID 取当前用户档案。
+// @Summary      当前用户档案
+// @Description  返回当前登录用户的档案、角色与权限码
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object} response.ApiResult
+// @Failure      401  {object} response.ProblemDetail
+// @Router       /auth/users/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	// 防御性断言：中间件应已注入 uint 类型 userID，缺失或类型异常一律视为未授权。
 	uidAny, exists := c.Get(middleware.ContextKeyUserID)

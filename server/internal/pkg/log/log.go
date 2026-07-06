@@ -5,14 +5,17 @@ import (
 	"os"
 	"sync"
 
+	"gva/internal/config"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"gva/internal/config"
 )
 
 var (
+	// L 全局 zap 结构化日志器；init 初始化为 nop，Init 后替换为真实实现。
 	L *zap.Logger
+	// S 全局 zap 糖化日志器（性能略低，调用便捷）。
 	S *zap.SugaredLogger
 )
 
@@ -48,7 +51,7 @@ func Init(cfg config.LogConfig) {
 		encCfg := zap.NewProductionEncoderConfig()
 		encCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 		encCfg.EncodeLevel = zapcore.CapitalLevelEncoder
-		var enc zapcore.Encoder = zapcore.NewConsoleEncoder(encCfg)
+		var enc = zapcore.NewConsoleEncoder(encCfg)
 		if cfg.Mode == "file" {
 			enc = zapcore.NewJSONEncoder(encCfg)
 		}

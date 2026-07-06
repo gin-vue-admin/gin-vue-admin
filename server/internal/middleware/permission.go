@@ -5,8 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"gva/internal/pkg/apperr"
+
+	"github.com/gin-gonic/gin"
 )
 
 // PermissionReader 中间件仅需"按 userID 查权限码集合"，最小接口避免依赖完整 repo。

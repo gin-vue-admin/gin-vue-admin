@@ -3,8 +3,9 @@ package repository
 import (
 	"context"
 
-	"gorm.io/gorm"
 	"gva/internal/model"
+
+	"gorm.io/gorm"
 )
 
 // MenuRepository 菜单数据访问。M4.1 只需 GetAllMenus。
@@ -13,8 +14,8 @@ type MenuRepository interface {
 	FindByID(ctx context.Context, id uint) (*model.Menu, error)
 	Create(ctx context.Context, m *model.Menu) error
 	Update(ctx context.Context, m *model.Menu) error
-	DeleteByIDs(ctx context.Context, ids []uint) error          // 批量硬删（级联用）
-	UpdateSorts(ctx context.Context, menus []model.Menu) error  // 批量更新 sort/parentId
+	DeleteByIDs(ctx context.Context, ids []uint) error         // 批量硬删（级联用）
+	UpdateSorts(ctx context.Context, menus []model.Menu) error // 批量更新 sort/parentId
 }
 
 type menuRepository struct {

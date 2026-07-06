@@ -3,10 +3,11 @@ package handler
 import (
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/response"
 	"gva/internal/service"
+
+	"github.com/gin-gonic/gin"
 )
 
 // MenuHandler 菜单端点。
@@ -19,6 +20,12 @@ func NewMenuHandler(svc *service.MenuService) *MenuHandler {
 }
 
 // Menus GET /api/system/menus —— 当前用户菜单树（后端下发完整树，前端按权限过滤）。
+// @Summary      当前用户菜单树
+// @Tags         menu
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object} response.ApiResult
+// @Router       /system/menus [get]
 func (h *MenuHandler) Menus(c *gin.Context) {
 	tree, err := h.svc.GetMenus(c.Request.Context())
 	if err != nil {
@@ -29,6 +36,12 @@ func (h *MenuHandler) Menus(c *gin.Context) {
 }
 
 // GetTree GET /api/system/menu —— 管理用菜单树（MenuInfo，含 id/parentId/sort/status）。
+// @Summary      管理用菜单树
+// @Tags         menu
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object} response.ApiResult
+// @Router       /system/menu [get]
 func (h *MenuHandler) GetTree(c *gin.Context) {
 	tree, err := h.svc.GetTree(c.Request.Context())
 	if err != nil {
@@ -39,6 +52,14 @@ func (h *MenuHandler) GetTree(c *gin.Context) {
 }
 
 // Create POST /api/system/menu —— 创建菜单。
+// @Summary      创建菜单
+// @Tags         menu
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body service.MenuCreateReq true "菜单信息"
+// @Success      200  {object} response.ApiResult
+// @Router       /system/menu [post]
 func (h *MenuHandler) Create(c *gin.Context) {
 	var req service.MenuCreateReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -54,6 +75,16 @@ func (h *MenuHandler) Create(c *gin.Context) {
 }
 
 // Update PUT /api/system/menu/:id —— 更新菜单（先 Get 再改字段再 Update）。
+// @Summary      更新菜单
+// @Tags         menu
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id      path int true "菜单 ID"
+// @Param        request body service.MenuCreateReq true "菜单信息"
+// @Success      200  {object} response.ApiResult
+// @Failure      404  {object} response.ProblemDetail
+// @Router       /system/menu/{id} [put]
 func (h *MenuHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -90,6 +121,14 @@ func (h *MenuHandler) Update(c *gin.Context) {
 }
 
 // Delete DELETE /api/system/menu/:id —— 级联删除（自身 + 所有子孙）。
+// @Summary      删除菜单（级联子孙）
+// @Tags         menu
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path int true "菜单 ID"
+// @Success      200  {object} response.ApiResult
+// @Failure      404  {object} response.ProblemDetail
+// @Router       /system/menu/{id} [delete]
 func (h *MenuHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -104,6 +143,15 @@ func (h *MenuHandler) Delete(c *gin.Context) {
 }
 
 // Sort PATCH /api/system/menu/sort —— 拖拽排序（inner/before/after）。
+// @Summary      菜单拖拽排序
+// @Description  按 inner/before/after 三种落点重排菜单层级与顺序
+// @Tags         menu
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body service.MenuSortReq true "排序参数"
+// @Success      200  {object} response.ApiResult
+// @Router       /system/menu/sort [patch]
 func (h *MenuHandler) Sort(c *gin.Context) {
 	var req service.MenuSortReq
 	if err := c.ShouldBindJSON(&req); err != nil {

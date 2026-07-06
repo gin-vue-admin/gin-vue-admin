@@ -5,9 +5,11 @@ import (
 	"context"
 	"time"
 
-	"gorm.io/gorm"
 	"gva/internal/model"
+	"gva/internal/pkg/datascope"
 	"gva/internal/pkg/pagination"
+
+	"gorm.io/gorm"
 )
 
 // UserRepository 用户数据访问接口。
@@ -20,8 +22,8 @@ type UserRepository interface {
 	FindByIDWithRoles(ctx context.Context, id uint) (*model.User, error)
 	UpdateLoginStats(ctx context.Context, id uint) error
 	// M3.3 新增
-	List(ctx context.Context, q pagination.Query, roleCode string) ([]model.User, int64, error)
-	ListAll(ctx context.Context, q pagination.Query, roleCode string) ([]model.User, error) // 不分页，导出用
+	List(ctx context.Context, q pagination.Query, roleCode string, scope datascope.Scope) ([]model.User, int64, error)
+	ListAll(ctx context.Context, q pagination.Query, roleCode string, scope datascope.Scope) ([]model.User, error) // 不分页，导出用
 	Create(ctx context.Context, u *model.User) error
 	Update(ctx context.Context, u *model.User) error
 	Delete(ctx context.Context, id uint) error
@@ -77,11 +79,12 @@ func (r *userRepository) UpdateLoginStats(ctx context.Context, id uint) error {
 		}).Error
 }
 
-// applyUserFilters 叠加 status/keyword/roleCode 过滤。
+// applyUserFilters 叠加 status/keyword/roleCode/数据范围 过滤。
 // 多表 JOIN（按角色过滤）时 Where 字段必须带表名前缀（users.status/users.username...），
 // 否则与 roles/user_roles 表的同名字段会引发 ambiguous column 错误。
 // 命名为 applyUserFilters，避免与 role.go 的 applyRoleFilters、permission.go 的 applyFilters 冲突。
-func applyUserFilters(db *gorm.DB, q pagination.Query, roleCode string) *gorm.DB {
+// scope 对 User 实体：部门列 users.dept_id，"本人"列 users.id（即只能看到自己这条）。
+func applyUserFilters(db *gorm.DB, q pagination.Query, roleCode string, scope datascope.Scope) *gorm.DB {
 	if q.Status != "" {
 		db = db.Where("users.status = ?", q.Status)
 	}
@@ -94,19 +97,20 @@ func applyUserFilters(db *gorm.DB, q pagination.Query, roleCode string) *gorm.DB
 			Joins("JOIN roles r ON r.id = ur.role_id").
 			Where("r.code = ?", roleCode)
 	}
+	db = scope.Apply(db, "users.dept_id", "users.id")
 	return db
 }
 
 // List 分页查询用户。count 与 list 各用独立 Session 隔离，避免 Where/Joins 叠加污染。
-// roleCode 非空时通过 user_roles/roles JOIN 过滤；Preload Roles 供前端列表展示。
-func (r *userRepository) List(ctx context.Context, q pagination.Query, roleCode string) ([]model.User, int64, error) {
+// roleCode 非空时通过 user_roles/roles JOIN 过滤；scope 叠加数据权限；Preload Roles 供前端列表展示。
+func (r *userRepository) List(ctx context.Context, q pagination.Query, roleCode string, scope datascope.Scope) ([]model.User, int64, error) {
 	var total int64
-	countDB := applyUserFilters(r.db.WithContext(ctx).Session(&gorm.Session{}), q, roleCode)
+	countDB := applyUserFilters(r.db.WithContext(ctx).Session(&gorm.Session{}), q, roleCode, scope)
 	if err := countDB.Model(&model.User{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 	var users []model.User
-	listDB := applyUserFilters(r.db.WithContext(ctx).Session(&gorm.Session{}), q, roleCode).Preload("Roles")
+	listDB := applyUserFilters(r.db.WithContext(ctx).Session(&gorm.Session{}), q, roleCode, scope).Preload("Roles")
 	offset := (q.Page - 1) * q.Size
 	if err := listDB.Offset(offset).Limit(q.Size).Find(&users).Error; err != nil {
 		return nil, 0, err
@@ -114,10 +118,10 @@ func (r *userRepository) List(ctx context.Context, q pagination.Query, roleCode 
 	return users, total, nil
 }
 
-// ListAll 不分页返全量（按 status/keyword/roleCode 过滤后的全切片），导出用。
-func (r *userRepository) ListAll(ctx context.Context, q pagination.Query, roleCode string) ([]model.User, error) {
+// ListAll 不分页返全量（按 status/keyword/roleCode/scope 过滤后的全切片），导出用。
+func (r *userRepository) ListAll(ctx context.Context, q pagination.Query, roleCode string, scope datascope.Scope) ([]model.User, error) {
 	var users []model.User
-	db := applyUserFilters(r.db.WithContext(ctx), q, roleCode).Preload("Roles")
+	db := applyUserFilters(r.db.WithContext(ctx), q, roleCode, scope).Preload("Roles")
 	if err := db.Find(&users).Error; err != nil {
 		return nil, err
 	}

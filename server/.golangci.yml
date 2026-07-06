@@ -1,0 +1,76 @@
+# golangci-lint v2 配置 — 见 https://golangci-lint.run/usage/configuration/
+# 用法：golangci-lint run ./... （CI 与本地 make lint 均用此配置）
+
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - govet          # 可疑构造，go 工具链自带
+    - errcheck       # 错误返回值必须检查
+    - staticcheck    # 综合静态分析（SA*）
+    - unused         # 未使用代码
+    - ineffassign    # 无效赋值
+    - gocyclo        # 圈复杂度
+    - gocritic       # 常见代码缺陷与改进建议
+    - revive         # golint 继任者，可配置的代码规范
+    - misspell       # 拼写错误
+    - bodyclose      # http.Response.Body 必须关闭
+  settings:
+    gocyclo:
+      min-complexity: 20      # 放宽至 20（业务 handler 偶有分支聚合）
+    revive:
+      severity: warning
+      rules:
+        # 仅强制"导出类型需 godoc 注释"（文档价值高）；
+        # 放宽 function/method（New* 构造函数、TableName 等惯例噪音）
+        - name: exported
+          arguments:
+            - disableChecksOnFunctions
+            - disableChecksOnMethods
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      # 禁用纯风格噪音（对管理后台非高频路径收益低，主流 Go 项目惯例禁用）：
+      #   hugeParam/rangeValCopy — 强制按指针传/遍历，污染 API 签名
+      #   unnecessaryBlock      — Gin 路由组用 {} 分组注册是惯例
+      #   unnamedResult         — 匿名返回值在本项目普遍且清晰
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+        - unnecessaryBlock
+        - unnamedResult
+        - ifElseChain      # 短 if-else 链改 switch 是噪音建议
+  exclusions:
+    # docs 包为 swaggo 自动生成，不检查
+    paths:
+      - docs
+    rules:
+      # 测试文件：放宽 errcheck（_ = 忽略错误是常见用法）与圈复杂度
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gocyclo
+          - gocritic
+      # main.go 装配处允许未检查错误（启动期 fatal 已覆盖）
+      - path: cmd/api/main\.go
+        linters:
+          - errcheck
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt          # 格式（等价 gofmt -s）
+    - goimports      # import 分组与排序
+  exclusions:
+    paths:
+      - docs

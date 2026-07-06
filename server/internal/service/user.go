@@ -7,14 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm"
 	"gva/internal/middleware"
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
+	"gva/internal/pkg/audit"
 	"gva/internal/pkg/csvutil"
+	"gva/internal/pkg/datascope"
 	"gva/internal/pkg/hash"
 	"gva/internal/pkg/pagination"
 	"gva/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 // UserInfo 用户响应 DTO，对齐前端 UserInfo 多角色契约。
@@ -54,13 +57,32 @@ type UserUpdateReq struct {
 }
 
 // UserService 用户业务：CRUD + list + export，支持多角色、防自删/自禁。
+// resolver 用于 List/Export 时按当前用户角色推导数据范围；nil 时不过滤（全量，供测试/未启用场景）。
 type UserService struct {
-	repo repository.UserRepository
+	repo     repository.UserRepository
+	resolver *datascope.Resolver
 }
 
-// NewUserService 构造用户业务。
-func NewUserService(repo repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+// NewUserService 构造用户业务。resolver 可为 nil（关闭数据范围过滤）。
+func NewUserService(repo repository.UserRepository, resolver *datascope.Resolver) *UserService {
+	return &UserService{repo: repo, resolver: resolver}
+}
+
+// resolveScope 取当前用户的数据范围。resolver 为 nil 或 ctx 无 userID → All（全量）。
+func (s *UserService) resolveScope(ctx context.Context) datascope.Scope {
+	if s.resolver == nil {
+		return datascope.Scope{All: true}
+	}
+	uid, ok := audit.UserIDFrom(ctx)
+	if !ok || uid == 0 {
+		return datascope.Scope{All: true}
+	}
+	scope, err := s.resolver.Resolve(ctx, uid)
+	if err != nil {
+		// 解析异常保守退化为仅本人（Resolver 内部已兜底，此处双保险）。
+		return datascope.Scope{Self: true, UserID: uid}
+	}
+	return scope
 }
 
 // toUserInfo User→UserInfo 转换：Roles→code 数组，LastLoginAt→RFC3339 字符串（空则 ""）。
@@ -88,10 +110,11 @@ func toUserInfo(u *model.User) UserInfo {
 	}
 }
 
-// List 分页列表（含 roles code）。
+// List 分页列表（含 roles code）。按当前用户数据范围过滤。
 func (s *UserService) List(ctx context.Context, q pagination.Query, roleCode string) (pagination.Result[UserInfo], error) {
 	q.Normalize()
-	users, total, err := s.repo.List(ctx, q, roleCode)
+	scope := s.resolveScope(ctx)
+	users, total, err := s.repo.List(ctx, q, roleCode, scope)
 	if err != nil {
 		return pagination.Result[UserInfo]{}, err
 	}
@@ -241,9 +264,10 @@ func (s *UserService) BatchDelete(ctx context.Context, ids []uint, operatorID ui
 	return nil
 }
 
-// Export 生成 CSV。用 ListAll 取全量不分页，避免漏数据。
+// Export 生成 CSV。用 ListAll 取全量不分页，按当前用户数据范围过滤，避免漏数据或越权。
 func (s *UserService) Export(ctx context.Context, q pagination.Query, roleCode string) (string, error) {
-	users, err := s.repo.ListAll(ctx, q, roleCode)
+	scope := s.resolveScope(ctx)
+	users, err := s.repo.ListAll(ctx, q, roleCode, scope)
 	if err != nil {
 		return "", err
 	}

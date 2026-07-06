@@ -8,13 +8,15 @@ import (
 	"errors"
 	"strconv"
 
-	"gorm.io/gorm"
 	"gva/internal/middleware"
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/csvutil"
+	"gva/internal/pkg/datascope"
 	"gva/internal/pkg/pagination"
 	"gva/internal/repository"
+
+	"gorm.io/gorm"
 )
 
 // RoleService 角色业务。
@@ -51,9 +53,12 @@ func (s *RoleService) Get(ctx context.Context, id uint) (*model.Role, error) {
 	return r, nil
 }
 
-// Create 创建。code 唯一约束冲突返回 409。
-func (s *RoleService) Create(ctx context.Context, name, code, description, status string) (*model.Role, error) {
-	r := &model.Role{Name: name, Code: code, Description: description, Status: status}
+// Create 创建。code 唯一约束冲突返回 409。dataScope 空串兜底为 all（与 model 默认一致）。
+func (s *RoleService) Create(ctx context.Context, name, code, description, status, dataScope string) (*model.Role, error) {
+	if dataScope == "" {
+		dataScope = datascope.ScopeAll
+	}
+	r := &model.Role{Name: name, Code: code, Description: description, Status: status, DataScope: dataScope}
 	if err := s.repo.Create(ctx, r); err != nil {
 		if isDuplicateKey(err) { // 复用 permission.go 中的 isDuplicateKey
 			return nil, apperr.Conflict("角色编码已存在")
