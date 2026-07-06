@@ -45,6 +45,12 @@ services:
       GVA_DB__DBNAME: ${MYSQL_DATABASE:-gva}
       GVA_JWT__SECRET: ${JWT_SECRET:-change-me-in-production}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
 
   web:
     build:
@@ -53,12 +59,35 @@ services:
       args:
         REGISTRY: ${REGISTRY:-docker.io/library}
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        DOCS_BASE: ${DOCS_BASE:-/docs/}
     container_name: gva-web
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     ports:
       - "${WEB_PORT:-80}:80"
     restart: unless-stopped
+
+  # MySQL 每日备份：每天 BACKUP_INTERVAL（默认 24h）dump 到 deploy/data/backups/，保留 7 天。
+  # 生产可用，开发用 `make compose-up` 默认启用；不需要时在 .env 设 ENABLE_BACKUP=false。
+  db-backup:
+    image: ${REGISTRY:-docker.io/library}/alpine:3.20
+    container_name: gva-db-backup
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gva}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-24h}
+      KEEP_DAYS: ${KEEP_DAYS:-7}
+    volumes:
+      - ./data/backups:/backups
+      - ./deploy/scripts/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    restart: unless-stopped
+    profiles: ["backup"]   # 仅 `docker compose --profile backup up` 时启用，默认不跑
 
 volumes:
   mysql-data:

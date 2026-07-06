@@ -1,0 +1,42 @@
+# TLS override：在基础 docker-compose.yml 之上叠加 HTTPS（Let's Encrypt + nginx）。
+#
+# 流程（见 deploy/scripts/init-certs.sh 详述）：
+#   1. .env 设 DOMAIN / EMAIL
+#   2. 首次签发：bash deploy/scripts/init-certs.sh   （certbot standalone，需宿主 80 空闲）
+#   3. 启动：    docker compose -f docker-compose.yml -f docker-compose.tls.yml --profile tls up -d
+#   4. 续期：    certbot 服务每 12h 自动 webroot 续期 + reload nginx
+#
+# 证书落在宿主 /etc/letsencrypt（certbot 默认），web 容器只读挂载。
+# nginx.tls.conf 含 DOMAIN_PLACEHOLDER，由 init-certs.sh sed 替换为 deploy/data/nginx.runtime.conf。
+
+services:
+  web:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # 覆盖默认 nginx.conf，启用 443 + 证书 + ACME challenge（init-certs.sh 生成）
+      - ./data/nginx.runtime.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./data/webroot:/var/www/certbot
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # certbot：续期定时器。首次证书由 init-certs.sh 单独签发。
+  # 启动后每 12h 尝试续期（certbot renew 仅在临近过期才真正更新），reload 由 nginx -s reload 完成。
+  certbot:
+    image: ${REGISTRY:-docker.io}/certbot/certbot:latest
+    container_name: gva-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - ./data/webroot:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet &&
+        docker kill -s HUP gva-web 2>/dev/null || true;
+        sleep 12h;
+      done"
+    restart: unless-stopped
+    profiles: ["tls"]
