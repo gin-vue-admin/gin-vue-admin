@@ -4,7 +4,7 @@
 #
 # 必需 GitHub Secrets：SERVER_HOST / SERVER_USER / DOCS_PATH / SERVER_SSH_KEY
 # 必需 GitHub Variables：DOCS_BASE（独立域名用 /）
-# 账号与密钥由 deploy/setup-docs-server.sh 在云主机上创建。
+# 云主机账号与密钥需预先配置：专用 deploy 账号 + ed25519 公钥写入 authorized_keys。
 name: Deploy Docs
 
 on:

@@ -26,6 +26,7 @@ Thumbs.db
 # ===== 部署产物 =====
 deploy/data/
 deploy/dist/
+deploy/setup-docs-server.sh
 
 # ===== 前端（web/ 为普通目录，内部另有 .gitignore；此处仅兜底）=====
 web/node_modules/
