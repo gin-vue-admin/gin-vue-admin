@@ -46,6 +46,10 @@ web/CONTRIBUTING.md
 web/SECURITY.md
 web/CHANGELOG.md
 web/docs/superpowers/
+# 上游文档站（与 gva 根 docs-site 重复，指向 vue-admin）+ 上游一键部署配置
+web/docs-site/
+web/netlify.toml
+web/vercel.json
 
 # ===== 开发会话产物（brainstorm/spec/plan，不入库）=====
 docs/superpowers/
