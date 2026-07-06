@@ -1,0 +1,65 @@
+# 文档站（VitePress）部署到云主机。
+# 触发：push 到 main 且 docs-site/ 或文档依赖变更；支持手动 workflow_dispatch。
+# 链路：pnpm docs:build（DOCS_BASE=/ 独立域名根）→ rsync 静态产物到云主机 DOCS_PATH。
+#
+# 必需 GitHub Secrets：SERVER_HOST / SERVER_USER / DOCS_PATH / SERVER_SSH_KEY
+# 必需 GitHub Variables：DOCS_BASE（独立域名用 /）
+# 账号与密钥由 deploy/setup-docs-server.sh 在云主机上创建。
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs-site/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+# 部署串行，不取消进行中的 run（避免半成品）
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建文档站
+        env:
+          DOCS_BASE: ${{ vars.DOCS_BASE || '/' }}
+        run: pnpm docs:build
+
+      - name: 配置 SSH 密钥
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "$SERVER_SSH_KEY" > ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: rsync 同步到云主机
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          DOCS_PATH: ${{ secrets.DOCS_PATH }}
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519" \
+            docs-site/.vitepress/dist/ \
+            "$SERVER_USER@$SERVER_HOST:$DOCS_PATH/"
