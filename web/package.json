@@ -73,7 +73,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19",
     "@commitlint/config-conventional": "^19",
-    "@eslint/js": "^9",
+    "@eslint/js": "^10",
     "@playwright/test": "^1.48",
     "@types/node": "^22.20.0",
     "@types/nprogress": "^0.2.3",
