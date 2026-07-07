@@ -62,9 +62,13 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           DOCS_PATH: ${{ secrets.DOCS_PATH }}
         run: |
-          rsync -az --delete \
-            --exclude='.well-known/' \
-            --no-times \
+          # 参数对齐 vue-admin 跑通的部署：属主 www，deploy 用户无 mtime/权限写权限
+          # --exclude=.user.ini：宝塔锁定文件（不可删）；--exclude=.well-known：Let's Encrypt 证书验证目录
+          rsync -avz --delete \
+            --exclude=.user.ini \
+            --exclude=.well-known \
+            --omit-dir-times \
+            --no-perms \
             -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT" \
             docs-site/.vitepress/dist/ \
             "$SERVER_USER@$SERVER_HOST:$DOCS_PATH/"
