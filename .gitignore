@@ -14,6 +14,7 @@ server/docs-site/
 *.log
 server/cover.html
 # 本地覆盖配置（不提交密钥/密码）
+server/configs/config.yaml
 server/configs/*.local.yaml
 server/configs/local/
 
