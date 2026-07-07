@@ -24,11 +24,6 @@ type permissionCreateReq struct {
 	Status      string `json:"status" binding:"required,oneof=active inactive"`
 }
 
-// batchDeleteReq 批量删除请求体，ids 为字符串数组（前端契约）。
-type batchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
-
 // PermissionHandler 权限端点处理器。
 type PermissionHandler struct {
 	svc *service.PermissionService

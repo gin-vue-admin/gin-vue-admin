@@ -6,11 +6,11 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"strings"
 
 	"gva/internal/model"
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/csvutil"
+	"gva/internal/pkg/gormx"
 	"gva/internal/pkg/pagination"
 	"gva/internal/repository"
 
@@ -64,7 +64,7 @@ func (s *PermissionService) Create(ctx context.Context, name, code, module, desc
 		Description: description, Status: status,
 	}
 	if err := s.repo.Create(ctx, p); err != nil {
-		if isDuplicateKey(err) {
+		if gormx.IsDuplicateKey(err) {
 			return nil, apperr.Conflict("权限编码已存在")
 		}
 		return nil, err
@@ -75,7 +75,7 @@ func (s *PermissionService) Create(ctx context.Context, name, code, module, desc
 // Update 更新。code 唯一约束冲突返回 409。
 func (s *PermissionService) Update(ctx context.Context, p *model.Permission) error {
 	if err := s.repo.Update(ctx, p); err != nil {
-		if isDuplicateKey(err) {
+		if gormx.IsDuplicateKey(err) {
 			return apperr.Conflict("权限编码已存在")
 		}
 		return err
@@ -122,17 +122,4 @@ func (s *PermissionService) Export(ctx context.Context, q pagination.Query, modu
 		})
 	}
 	return csvutil.Build(rows, []string{"id", "name", "code", "module", "description", "status", "createTime", "updateTime"}), nil
-}
-
-// isDuplicateKey 判断 gorm/driver 唯一约束错误。
-// GORM 的 errors.Is(err, gorm.ErrDuplicatedKey) 在某些 driver 版本可能不触发（依赖 driver 翻译错误）；
-// SQLite 的 go-sqlite3 驱动返回含 "UNIQUE constraint failed" 的错误，MySQL 返回 "Duplicate entry"。
-// 字符串匹配是兜底，保持双重判断以兼容两种驱动。
-func isDuplicateKey(err error) bool {
-	if err == nil {
-		return false
-	}
-	return errors.Is(err, gorm.ErrDuplicatedKey) ||
-		strings.Contains(err.Error(), "Duplicate entry") ||
-		strings.Contains(err.Error(), "UNIQUE constraint failed")
 }

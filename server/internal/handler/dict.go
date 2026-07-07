@@ -14,9 +14,7 @@ import (
 )
 
 // dictBatchDeleteReq 三级共用的批量删除请求体。
-type dictBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type dictBatchDeleteReq = batchDeleteReq
 
 // parseIDFromCtx 解析路径 :id，失败写 422。
 func parseIDFromCtx(c *gin.Context) (uint, bool) {

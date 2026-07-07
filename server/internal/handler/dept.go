@@ -18,9 +18,7 @@ type deptListQuery struct {
 }
 
 // deptBatchDeleteReq 批量删除请求体（前端契约 ids 为字符串数组）。
-type deptBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type deptBatchDeleteReq = batchDeleteReq
 
 // DeptHandler 部门端点处理器。
 type DeptHandler struct {

@@ -32,9 +32,7 @@ type setPermissionsReq struct {
 
 // roleBatchDeleteReq 批量删除请求体，ids 为字符串数组（前端契约）。
 // 注：与 permission handler 的 batchDeleteReq 同包冲突，故加 role 前缀。
-type roleBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type roleBatchDeleteReq = batchDeleteReq
 
 // RoleHandler 角色端点处理器。
 type RoleHandler struct {

@@ -1,6 +1,5 @@
 // Package service 角色业务：CRUD + 分页列表 + CSV 导出 + 权限分配。
 // 依赖 repository.RoleRepository 接口，便于单测用 mock 替换 DB。
-// isDuplicateKey 为同包 permission.go 已定义的复用函数（不在此重复定义）。
 package service
 
 import (
@@ -13,6 +12,7 @@ import (
 	"gva/internal/pkg/apperr"
 	"gva/internal/pkg/csvutil"
 	"gva/internal/pkg/datascope"
+	"gva/internal/pkg/gormx"
 	"gva/internal/pkg/pagination"
 	"gva/internal/repository"
 
@@ -60,7 +60,7 @@ func (s *RoleService) Create(ctx context.Context, name, code, description, statu
 	}
 	r := &model.Role{Name: name, Code: code, Description: description, Status: status, DataScope: dataScope}
 	if err := s.repo.Create(ctx, r); err != nil {
-		if isDuplicateKey(err) { // 复用 permission.go 中的 isDuplicateKey
+		if gormx.IsDuplicateKey(err) {
 			return nil, apperr.Conflict("角色编码已存在")
 		}
 		return nil, err
@@ -71,7 +71,7 @@ func (s *RoleService) Create(ctx context.Context, name, code, description, statu
 // Update 更新。code 唯一约束冲突返回 409。
 func (s *RoleService) Update(ctx context.Context, r *model.Role) error {
 	if err := s.repo.Update(ctx, r); err != nil {
-		if isDuplicateKey(err) {
+		if gormx.IsDuplicateKey(err) {
 			return apperr.Conflict("角色编码已存在")
 		}
 		return err

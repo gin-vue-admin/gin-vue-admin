@@ -23,9 +23,7 @@ type opLogListQuery struct {
 }
 
 // opLogBatchDeleteReq 批量删除请求体。
-type opLogBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type opLogBatchDeleteReq = batchDeleteReq
 
 // OperationLogHandler 操作日志处理器。
 type OperationLogHandler struct {

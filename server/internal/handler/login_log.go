@@ -23,9 +23,7 @@ type loginLogListQuery struct {
 }
 
 // loginLogBatchDeleteReq 批量删除请求体。
-type loginLogBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type loginLogBatchDeleteReq = batchDeleteReq
 
 // LoginLogHandler 登录日志处理器。
 type LoginLogHandler struct {

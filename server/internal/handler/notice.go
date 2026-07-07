@@ -13,9 +13,7 @@ import (
 )
 
 // noticeBatchDeleteReq 批量删除请求。
-type noticeBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type noticeBatchDeleteReq = batchDeleteReq
 
 // NoticeHandler 公告处理器。
 type NoticeHandler struct {

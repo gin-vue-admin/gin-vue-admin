@@ -13,9 +13,7 @@ import (
 )
 
 // userBatchDeleteReq 批量删除请求；命名加 user 前缀避免与 permission/role 同包冲突。
-type userBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type userBatchDeleteReq = batchDeleteReq
 
 // UserHandler 用户管理 HTTP handler。
 type UserHandler struct {

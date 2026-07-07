@@ -13,6 +13,7 @@ import (
 	"gva/internal/pkg/audit"
 	"gva/internal/pkg/csvutil"
 	"gva/internal/pkg/datascope"
+	"gva/internal/pkg/gormx"
 	"gva/internal/pkg/hash"
 	"gva/internal/pkg/pagination"
 	"gva/internal/repository"
@@ -157,7 +158,7 @@ func (s *UserService) Create(ctx context.Context, username, realName, email, pho
 		Status:   status,
 	}
 	if err := s.repo.Create(ctx, u); err != nil {
-		if isDuplicateKey(err) { // 复用同包 M3.1 定义，不重复
+		if gormx.IsDuplicateKey(err) {
 			return UserInfo{}, apperr.Conflict("用户名已存在")
 		}
 		return UserInfo{}, err
@@ -210,7 +211,7 @@ func (s *UserService) Update(ctx context.Context, id, operatorID uint, req *User
 		u.Password = hashed
 	}
 	if err := s.repo.Update(ctx, u); err != nil {
-		if isDuplicateKey(err) {
+		if gormx.IsDuplicateKey(err) {
 			return UserInfo{}, apperr.Conflict("用户名已存在")
 		}
 		return UserInfo{}, err

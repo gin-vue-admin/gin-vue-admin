@@ -34,9 +34,7 @@ type crudUpsertReq struct {
 
 // crudBatchDeleteReq 批量删除请求体（前端契约 ids 为字符串数组）。
 // 加 crud 前缀避免与同包其他 batchDeleteReq 冲突。
-type crudBatchDeleteReq struct {
-	IDs []string `json:"ids" binding:"required,min=1"`
-}
+type crudBatchDeleteReq = batchDeleteReq
 
 // CrudHandler 通用 CRUD 端点处理器。
 type CrudHandler struct {
