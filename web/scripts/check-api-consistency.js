@@ -35,8 +35,8 @@ function extractFrontendApis(filePath) {
   
   // 匹配 api.get/post/put/del 调用
   const patterns = [
-    /api\.(get|post|put|del)\s*<[^>]+>\s*\(\s*['"]([^'"]+)['"]/g,
-    /api\.(get|post|put|del)\s*\(\s*['"]([^'"]+)['"]/g
+    /api\.(get|post|put|del)\s*<[^>]+>\s*\(\s*['"`]([^'"`]+)['"`]/g,
+    /api\.(get|post|put|del)\s*\(\s*['"`]([^'"`]+)['"`]/g
   ]
   
   patterns.forEach(pattern => {

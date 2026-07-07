@@ -10,6 +10,7 @@ import { dashboardHandlers } from './handlers/dashboard'
 import { crudHandlers } from './handlers/crud'
 import { logHandlers } from './handlers/log'
 import { menuManageHandlers } from './handlers/menu-manage'
+import { configHandlers } from './handlers/config'
 
 export const handlers = [
   ...authHandlers,
@@ -23,5 +24,6 @@ export const handlers = [
   ...dashboardHandlers,
   ...crudHandlers,
   ...logHandlers,
-  ...menuManageHandlers
+  ...menuManageHandlers,
+  ...configHandlers
 ]

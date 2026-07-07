@@ -1,0 +1,108 @@
+# 前端代码质量门禁
+# 触发：push 到 main、任意 PR。与后端 ci.yml 平级。
+# 链路：pnpm install → eslint → vue-tsc → pnpm test
+#   pnpm test 的 pretest 钩子会先跑 check:api（前端 API 调用 vs mock 端点一致性），
+#   再跑 vitest 单测（MSW 拦截，零外部依赖）+ v8 覆盖率。
+#
+# smoke（playwright e2e）：smoke job 用 dev server + MSW（VITE_ENABLE_MOCK=true），
+# playwright.config 的 webServer 自动起 dev，25 个 e2e 覆盖全页面闭环。
+name: Web CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 同分支新提交取消进行中的旧 run，省 CI 配额
+concurrency:
+  group: web-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test:
+    name: Lint + Type-check + Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: 安装依赖
+        env:
+          HUSKY: '0' # CI 无需安装 git hooks
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint（eslint）
+        run: pnpm lint
+
+      - name: 类型检查（vue-tsc）
+        run: pnpm type-check
+
+      - name: 单元测试（check:api 一致性 + vitest + 覆盖率）
+        run: pnpm test -- --coverage
+
+      - name: 上传覆盖率
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage-${{ github.sha }}
+          path: web/coverage/
+          retention-days: 14
+
+  smoke:
+    name: Smoke (Playwright)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: 安装依赖
+        env:
+          HUSKY: '0'
+        run: pnpm install --frozen-lockfile
+
+      - name: 安装 Playwright 浏览器
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: 运行 smoke 测试（dev server + MSW）
+        env:
+          VITE_ENABLE_MOCK: 'true'
+        run: pnpm smoke
+
+      - name: 上传测试报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-smoke-report-${{ github.sha }}
+          path: web/playwright-report/
+          retention-days: 14

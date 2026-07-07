@@ -7,6 +7,8 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Go](https://img.shields.io/badge/Go-1.25+-00ADD8.svg)
 ![Gin](https://img.shields.io/badge/Gin-1.12-00ADD8.svg)
+![CI](https://github.com/gin-vue-admin/gin-vue-admin/actions/workflows/ci.yml/badge.svg)
+![Web CI](https://github.com/gin-vue-admin/gin-vue-admin/actions/workflows/web-ci.yml/badge.svg)
 ![Status](https://img.shields.io/badge/status-beta-orange.svg)
 
 > 企业级后台管理系统：**Gin** 后端 + [vue-admin/vue-admin](https://github.com/vue-admin/vue-admin) 前端，遵循业界标准（SOLID / KISS / Clean Architecture）实现。

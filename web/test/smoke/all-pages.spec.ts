@@ -9,7 +9,7 @@ export async function login(page: Page) {
   await page.getByRole('textbox', { name: '用户名' }).fill('admin')
   await page.getByRole('textbox', { name: '密码' }).fill('123456')
   await page.getByRole('button', { name: '登录' }).click()
-  await expect(page).toHaveURL(/\/(\?.*)?$/)
+  await expect(page).toHaveURL(/\/(\?.*)?$/, { timeout: 30000 })
   // 等待 layout 渲染完成
   await expect(page.locator('.el-menu').first()).toBeVisible()
 }

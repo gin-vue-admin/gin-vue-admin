@@ -13,6 +13,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"strconv"
 
 	_ "gva/docs" // M8 Swagger：触发 docs 包 init，注册 swagger spec
@@ -33,7 +35,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// version 版本号，可由构建时 ldflags 注入：-ldflags "-X main.version=0.1.0"
+var version = "0.1.0"
+
 func main() {
+	// -version：打印版本号并退出（开源项目常备）
+	showVersion := flag.Bool("version", false, "打印版本号并退出")
+	flag.Parse()
+	if *showVersion {
+		fmt.Println("gva version", version)
+		return
+	}
+
 	// 1. 配置
 	cfg, err := config.Load()
 	if err != nil {
