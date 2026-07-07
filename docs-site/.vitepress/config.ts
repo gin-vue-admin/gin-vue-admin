@@ -12,7 +12,8 @@ export default defineConfig({
   // dev 模式默认 base=/（直接访问根，便于本地预览）；
   // 生产 build 经 DOCS_BASE 覆盖为子路径（如 /docs/），见 Makefile docs-build / web.Dockerfile。
   base: process.env.DOCS_BASE ?? '/',
-  ignoreDeadLinks: true,
+  // 仅忽略 localhost 示例链接（开发期 swagger 等本地地址），其他内部/外链死链严格报错。
+  ignoreDeadLinks: 'localhostLinks',
   head: [['meta', { name: 'theme-color', content: '#00ADD8' }]],
   themeConfig: {
     logo: '/logo.png',

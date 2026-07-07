@@ -48,8 +48,11 @@ func NewRouter(authHandler *handler.AuthHandler, permHandler *handler.Permission
 	r.NoRoute(func(c *gin.Context) { response.Problem(c, 404, "", "资源不存在") })
 	r.NoMethod(func(c *gin.Context) { response.Problem(c, 405, "", "方法不允许") })
 
-	// M8 Swagger UI：访问 /swagger/index.html 查看 API 文档（无需鉴权）。
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// M8 Swagger UI：仅非 release 模式开放，访问 /swagger/index.html 查看 API 文档。
+	// 生产（release）关闭，避免无鉴权暴露完整接口结构。
+	if gin.Mode() != gin.ReleaseMode {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	api := r.Group("/api")
 	// 操作日志中间件：记录所有写操作（GET 跳过）。挂在 api 组，username 从 AuthRequired 注入取。

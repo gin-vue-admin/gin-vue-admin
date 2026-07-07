@@ -4,7 +4,9 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
+	"strings"
 	"time"
 
 	"gva/internal/model"
@@ -22,6 +24,31 @@ func isWriteMethod(m string) bool {
 		return true
 	}
 	return false
+}
+
+// sensitiveFields 操作日志中需脱敏的 JSON 字段（值替换为 ***），防止明文落库。
+// 仅处理顶层字段（登录/改密等请求体均为扁平结构）。
+var sensitiveFields = []string{"password", "oldPassword", "newPassword", "secret", "token", "captcha"}
+
+// redactParams 对 JSON 请求体做敏感字段脱敏后截断；非 JSON 仅截断。
+func redactParams(contentType, body string) string {
+	if strings.Contains(contentType, "application/json") {
+		var m map[string]any
+		if json.Unmarshal([]byte(body), &m) == nil {
+			for _, f := range sensitiveFields {
+				if _, ok := m[f]; ok {
+					m[f] = "***"
+				}
+			}
+			if b, err := json.Marshal(m); err == nil {
+				body = string(b)
+			}
+		}
+	}
+	if len(body) > 2000 { // 截断防止超大 body
+		body = body[:2000]
+	}
+	return body
 }
 
 // OperationLog 操作日志中间件：
@@ -56,10 +83,7 @@ func OperationLog(repo repository.OperationLogRepository, runner async.Runner) g
 		if c.Writer.Status() >= 400 {
 			status = "failed"
 		}
-		params := string(bodyBytes)
-		if len(params) > 2000 { // 截断防止超大 body
-			params = params[:2000]
-		}
+		params := redactParams(c.Request.Header.Get("Content-Type"), string(bodyBytes))
 
 		entry := &model.OperationLog{
 			Username:  usernameStr,
