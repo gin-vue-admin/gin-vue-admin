@@ -93,7 +93,8 @@ func RequireAllPermissions(repo PermissionReader, codes ...string) gin.HandlerFu
 }
 
 // loadPermissions 取指定用户的权限码集合（缓存优先，TTL 到期重查）。
-// 读缓存用 RLock；未命中时查 repo 并写缓存用 Lock。
+// 读缓存用 RLock；未命中时持写锁查 repo 并回填（双重检查锁定），
+// 消除缓存过期瞬间多个 goroutine 同时打 DB 的击穿/惊群。
 func loadPermissions(ctx context.Context, repo PermissionReader, uid uint) (map[string]struct{}, error) {
 	permCacheMu.RLock()
 	if e, ok := permCache[uid]; ok && time.Now().Before(e.expireAt) {
@@ -102,6 +103,12 @@ func loadPermissions(ctx context.Context, repo PermissionReader, uid uint) (map[
 	}
 	permCacheMu.RUnlock()
 
+	permCacheMu.Lock()
+	defer permCacheMu.Unlock()
+	// 双重检查：排队拿到写锁后，可能已被前一个 goroutine 回填，直接复用
+	if e, ok := permCache[uid]; ok && time.Now().Before(e.expireAt) {
+		return e.codes, nil
+	}
 	codes, err := repo.GetUserPermissionCodes(ctx, uid)
 	if err != nil {
 		return nil, err
@@ -110,9 +117,7 @@ func loadPermissions(ctx context.Context, repo PermissionReader, uid uint) (map[
 	for _, c := range codes {
 		set[c] = struct{}{}
 	}
-	permCacheMu.Lock()
 	permCache[uid] = cacheEntry{codes: set, expireAt: time.Now().Add(permissionCacheTTL)}
-	permCacheMu.Unlock()
 	return set, nil
 }
 

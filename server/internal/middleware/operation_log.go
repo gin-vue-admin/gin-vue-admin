@@ -9,6 +9,7 @@ import (
 
 	"gva/internal/model"
 	"gva/internal/pkg/async"
+	"gva/internal/pkg/log"
 	"gva/internal/repository"
 
 	"github.com/gin-gonic/gin"
@@ -71,6 +72,10 @@ func OperationLog(repo repository.OperationLogRepository, runner async.Runner) g
 			HTTPCode:  c.Writer.Status(),
 			Duration:  duration,
 		}
-		runner.Go(func() { _ = repo.Create(context.Background(), entry) })
+		runner.Go(func() {
+			if err := repo.Create(context.Background(), entry); err != nil {
+				log.S.Warnw("操作日志写入失败", "path", entry.Path, "err", err)
+			}
+		})
 	}
 }

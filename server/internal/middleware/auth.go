@@ -30,6 +30,11 @@ func AuthRequired(jwtMgr *jwt.Manager) gin.HandlerFunc {
 			apperr.Write(c, apperr.Unauthorized("未授权"))
 			return
 		}
+		// 防御性校验：签发逻辑 bug 或异常 claims 不应放行（签名合法但 uid 为零值）
+		if claims.UserID == 0 || claims.Username == "" {
+			apperr.Write(c, apperr.Unauthorized("未授权"))
+			return
+		}
 		c.Set(ContextKeyUserID, claims.UserID)
 		c.Set(ContextKeyUsername, claims.Username)
 		// 注入 request context：下游 c.Request.Context() 携带 userID，GORM 审计回调据此写入
