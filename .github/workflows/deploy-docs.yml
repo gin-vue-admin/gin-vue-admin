@@ -2,7 +2,7 @@
 # 触发：push 到 main 且 docs-site/ 或文档依赖变更；支持手动 workflow_dispatch。
 # 链路：pnpm docs:build（DOCS_BASE=/ 独立域名根）→ rsync 静态产物到云主机 DOCS_PATH。
 #
-# 必需 GitHub Secrets：SERVER_HOST / SERVER_USER / DOCS_PATH / SERVER_SSH_KEY
+# 必需 GitHub Secrets：SERVER_HOST / SERVER_PORT / SERVER_USER / DOCS_PATH / SERVER_SSH_KEY
 # 必需 GitHub Variables：DOCS_BASE（独立域名用 /）
 # 云主机账号与密钥需预先配置：专用 deploy 账号 + ed25519 公钥写入 authorized_keys。
 name: Deploy Docs
@@ -48,18 +48,20 @@ jobs:
       - name: 配置 SSH 密钥
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
           SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_ed25519
           printf '%s\n' "$SERVER_SSH_KEY" > ~/.ssh/id_ed25519
-          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H -p "$SERVER_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: rsync 同步到云主机
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
           DOCS_PATH: ${{ secrets.DOCS_PATH }}
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519" \
+          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519 -p $SERVER_PORT" \
             docs-site/.vitepress/dist/ \
             "$SERVER_USER@$SERVER_HOST:$DOCS_PATH/"
