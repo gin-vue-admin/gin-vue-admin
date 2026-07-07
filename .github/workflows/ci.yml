@@ -46,10 +46,9 @@ jobs:
         run: go vet ./...
 
       - name: 生成 Swagger 文档（验证 handler 注解可被 swag 解析）
-        uses: swaggo/swag-action@v2
-        with:
-          working-directory: server
-          args: init -g cmd/api/main.go -o docs --parseInternal --parseDependency --quiet
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@latest
+          swag init -g cmd/api/main.go -o docs --parseInternal --parseDependency --quiet
 
       - name: 单元测试（含覆盖率）
         run: go test -race -coverprofile=coverage.out ./...
