@@ -33,7 +33,7 @@
 <script lang="ts" setup>
 import ContextMenu from './ContextMenu.vue'
 import { useTagsViewClose } from './useTagsViewClose'
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onBeforeUnmount } from 'vue'
 import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTagsViewStore, type TagsViewItem } from '@/app/stores/tagsView'
@@ -90,6 +90,11 @@ watch(
   },
   { immediate: true }
 )
+
+// 卸载兜底：组件在菜单展开状态被销毁时（如路由切换），确保 click 监听器不残留
+onBeforeUnmount(() => {
+  document.body.removeEventListener('click', closeMenu)
+})
 
 const getTitle = (route: RouteLocationNormalizedLoaded) => {
   if (!route.meta) {
