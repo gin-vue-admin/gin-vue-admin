@@ -92,7 +92,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 安装 Playwright 浏览器
-        run: pnpm exec playwright install --with-deps chromium
+        # --ignore-workspace：web/ 不在 pnpm-workspace.yaml 的 packages 内，
+        # 不加会触发 recursive exec（在根 workspace 包找 playwright）→ Command not found。
+        run: pnpm --ignore-workspace exec playwright install --with-deps chromium
 
       - name: 运行 smoke 测试（dev server + MSW）
         env:
