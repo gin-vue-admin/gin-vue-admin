@@ -85,8 +85,8 @@ make compose-up        # 滚动重启（数据卷保留）
 VitePress 构建产物集成在 nginx 镜像内，访问 `/docs/`。本地预览：
 
 ```bash
-pnpm install           # 首次（根 package.json）
-make docs-dev          # 或 pnpm docs:dev，http://localhost:5173/docs/（端口冲突：VITE_PORT=5175 pnpm docs:dev）
+cd docs-site && pnpm install   # 首次（docs-site/package.json）
+make docs-dev          # 或 cd docs-site && pnpm dev，http://localhost:5173/（端口冲突：VITE_PORT=5175 pnpm dev）
 ```
 
 修改 `docs-site/` 后在 CI 自动重新构建。

@@ -23,9 +23,6 @@ pnpm test:watch     # Vitest watch 模式
 pnpm smoke          # Playwright smoke 测试（需先启动 dev server）
 pnpm smoke:ui       # Playwright smoke UI 模式
 pnpm preview        # 预览生产构建
-pnpm docs:dev       # VitePress 文档站开发（docs-site/）
-pnpm docs:build     # VitePress 文档站构建
-pnpm docs:preview   # VitePress 文档站预览
 ```
 
 ## 技术栈

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/logo.png" alt="gin-vue-admin" width="120">
+  <img src="docs-site/public/logo.png" alt="gin-vue-admin" width="120">
 </div>
 
 # gin-vue-admin

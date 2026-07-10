@@ -1,7 +1,0 @@
-# pnpm 配置（v11+ 从此文件读取）。
-# workspace 仅含根（docs-site 文档站）；web/ 是独立项目（原 vue-admin），不纳入 workspace。
-# 这样在 web/ 跑 pnpm install/dev 不会被 workspace 干扰。
-packages:
-  - '.'
-allowBuilds:
-  esbuild: true

@@ -1,6 +1,6 @@
 # 文档站（VitePress）部署到云主机。
 # 触发：push 到 main 且 docs-site/ 或文档依赖变更；支持手动 workflow_dispatch。
-# 链路：pnpm docs:build（DOCS_BASE=/ 独立域名根）→ rsync 静态产物到云主机 DOCS_PATH。
+# 链路：cd docs-site && pnpm build（DOCS_BASE=/ 独立域名根）→ rsync 静态产物到云主机 DOCS_PATH。
 #
 # 必需 GitHub Secrets：SERVER_HOST / SERVER_PORT / SERVER_USER / DOCS_PATH / SERVER_SSH_KEY
 # 必需 GitHub Variables：DOCS_BASE（独立域名用 /）
@@ -12,8 +12,8 @@ on:
     branches: [main]
     paths:
       - 'docs-site/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
+      - 'docs-site/package.json'
+      - 'docs-site/pnpm-lock.yaml'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -36,14 +36,17 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: docs-site/pnpm-lock.yaml
 
       - name: 安装依赖
+        working-directory: docs-site
         run: pnpm install --frozen-lockfile
 
       - name: 构建文档站
         env:
           DOCS_BASE: ${{ vars.DOCS_BASE || '/' }}
-        run: pnpm docs:build
+        working-directory: docs-site
+        run: pnpm build
 
       - name: 配置 SSH 密钥
         env:

@@ -5,9 +5,9 @@
   "type": "module",
   "description": "gin-vue-admin 项目文档站（VitePress）",
   "scripts": {
-    "docs:dev": "vitepress dev docs-site",
-    "docs:build": "vitepress build docs-site",
-    "docs:preview": "vitepress preview docs-site"
+    "dev": "vitepress dev .",
+    "build": "vitepress build .",
+    "preview": "vitepress preview ."
   },
   "devDependencies": {
     "vitepress": "^1.6.4"

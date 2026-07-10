@@ -45,9 +45,7 @@ jobs:
       - name: 安装依赖
         env:
           HUSKY: '0' # CI 无需安装 git hooks
-        # --ignore-workspace：web/ 不在根 pnpm-workspace.yaml 的 packages 内，
-        # 不加会按根 workspace 安装 -> web/node_modules 不生成 -> eslint 等二进制缺失。
-        run: pnpm --ignore-workspace install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Lint（eslint）
         run: pnpm lint
@@ -91,13 +89,10 @@ jobs:
       - name: 安装依赖
         env:
           HUSKY: '0'
-        # 同 lint-test：--ignore-workspace 确保 web/node_modules 正确安装。
-        run: pnpm --ignore-workspace install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 安装 Playwright 浏览器
-        # --ignore-workspace：web/ 不在 pnpm-workspace.yaml 的 packages 内，
-        # 不加会触发 recursive exec（在根 workspace 包找 playwright）→ Command not found。
-        run: pnpm --ignore-workspace exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: 运行 smoke 测试（dev server + MSW）
         env:

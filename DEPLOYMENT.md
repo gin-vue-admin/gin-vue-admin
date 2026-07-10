@@ -189,8 +189,8 @@ VitePress 文档站已集成进 `web.Dockerfile`：
 本地预览（不改部署）：
 
 ```bash
-pnpm install                   # 根 package.json（首次）
-pnpm docs:dev                  # http://localhost:5173/docs/（端口冲突：VITE_PORT=5175 pnpm docs:dev）
+cd docs-site && pnpm install   # 首次（docs-site/package.json）
+cd docs-site && pnpm dev       # http://localhost:5173/（端口冲突：VITE_PORT=5175 pnpm dev）
 ```
 
 ---

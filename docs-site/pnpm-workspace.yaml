@@ -1,0 +1,6 @@
+# pnpm v11+ 配置载体（docs-site 独立项目，非 workspace）。
+# allowBuilds：v11 替代 onlyBuiltDependencies，显式允许 esbuild 运行构建脚本
+# （vitepress 依赖，需 native binary 构建）。
+# 无 packages 字段 → 不构成 workspace，仅作配置文件，不影响仓库根或 web/。
+allowBuilds:
+  esbuild: true

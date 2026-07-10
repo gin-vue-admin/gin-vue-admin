@@ -54,16 +54,16 @@ web-dev: ## 启动前端开发服务器
 web-build: ## 构建前端生产包
 	cd $(WEB_DIR) && pnpm build
 
-# ---------------- 文档站（VitePress） ----------------
+# ---------------- 文档站（VitePress，docs-site/ 子项目）----------------
 .PHONY: docs-install docs-dev docs-build
-docs-install: ## 安装文档站依赖（根 package.json）
-	pnpm install
+docs-install: ## 安装文档站依赖（docs-site/package.json）
+	cd docs-site && pnpm install
 
-docs-dev: ## 文档站本地预览（http://localhost:5173/docs/，端口冲突用 VITE_PORT 覆盖）
-	pnpm docs:dev
+docs-dev: ## 文档站本地预览（http://localhost:5173/，端口冲突用 VITE_PORT 覆盖）
+	cd docs-site && pnpm dev
 
 docs-build: ## 构建文档站静态产物（DOCS_BASE 控制子路径）
-	DOCS_BASE=${DOCS_BASE:-/docs/} pnpm docs:build
+	cd docs-site && DOCS_BASE=$${DOCS_BASE:-/docs/} pnpm build
 
 # ---------------- 部署 ----------------
 .PHONY: compose-up compose-down compose-build

@@ -38,9 +38,9 @@ updates:
       build-tooling:
         patterns: ["vite", "@vitejs/*", "vite-plugin-*", "unplugin-*"]
 
-  # 文档站 npm 依赖（根 package.json，VitePress）
+  # 文档站 npm 依赖（docs-site/package.json，VitePress）
   - package-ecosystem: npm
-    directory: /
+    directory: /docs-site
     schedule:
       interval: weekly
       day: monday
