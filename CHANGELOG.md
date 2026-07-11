@@ -10,12 +10,19 @@
 - server `-version` flag（开源项目常备版本号输出，可由 ldflags 注入）。
 - README 动态 CI 徽章（ci.yml + web-ci.yml）。
 
+### Changed
+- docs-site 文档站独立成 `docs-site/` 子项目（与 web/ 对齐）：依赖管理从仓库根下沉到 `docs-site/package.json` + `pnpm-lock.yaml` + `pnpm-workspace.yaml`（仅 `allowBuilds`，pnpm v11 配置载体）；删除根 `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml`；`deploy-docs.yml` / `Makefile` / `web.Dockerfile` / `dependabot.yml` 改走 docs-site/；`web-ci.yml` 去掉三处 `--ignore-workspace`（根 workspace 已删，web/ 天然独立，根因消除）。
+
 ### Removed
 - 删除 `web/docs-site/`（vue-admin 独立项目遗留文档站，根 `docs-site/` 已作为统一文档站，消除双源维护）与 `web/.github/`（vue-admin 遗留 GitHub workflow/templates，子目录 `.github` 不被 GitHub 执行属死代码）；同步移除 `web/package.json` 的 docs 脚本。
+- `web/public/md.html`：遗留 md-editor CDN demo 页（引用 zeus 框架，与 gva 无关）。
+- 根 `package.json`/`pnpm-lock.yaml`/`pnpm-workspace.yaml`（docs-site 独立化下沉，见 Changed）。
 
 ### Fixed
 - `check:api` 一致性脚本正则支持模板字符串反引号，检测覆盖 50 → 91 个端点（此前 `` api.get(`/api/.../${id}`) `` 这类反引号端点漏检）。
 - 补齐 `system/config` 模块 mock handler（6 端点：列表/按 id/按 key/增/改/删），修复 check:api 检测到的前后端契约不一致；此前该模块仅有前端 API 调用无 mock 落地。
+- Makefile `docs-build` 的 `DOCS_BASE` 变量转义（单 `$` → `$$`，原表达式被 make 吞掉一直失效）。
+- `docs-site/pnpm-workspace.yaml` 补 `packages: ['.']`（pnpm 9 要求非空，否则 "packages field missing"）。
 
 ## [0.1.0] - 2026-07-07
 
