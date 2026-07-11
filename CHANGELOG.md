@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-11
+
 ### Added
 - 前端 CI 门禁（`.github/workflows/web-ci.yml`）：eslint + vue-tsc 类型检查 + vitest 单测（pretest 钩子含 check:api 前后端契约一致性检测）+ v8 覆盖率 + playwright smoke e2e（dev server + MSW，25 用例），与后端 ci.yml 平级。
 - handler 集成测试全覆盖：新增 9 模块 63 个集成测试（permission/role/menu/dept/dict/sys_config/notice/log/dashboard+health+crud）+ `newAppServer` 全量测试装配，handler 包覆盖率 5.6% → 55.1%。

@@ -46,7 +46,7 @@ gin-vue-admin/
 │   └── configs/config.yaml    # 配置（环境变量可覆盖）
 ├── web/                       # Vue3 前端（基于 vue-admin 演进，普通目录）
 ├── deploy/                    # Dockerfile / docker-compose / nginx
-├── docs-site/                 # 本文档站（VitePress）
+├── docs-site/                 # 文档站（VitePress，独立子项目：自带 package.json/pnpm-lock.yaml）
 └── .github/                   # CI / Issue 模板
 ```
 
