@@ -58,7 +58,7 @@ jobs:
 
       - name: 上传覆盖率
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-coverage-${{ github.sha }}
           path: web/coverage/
@@ -101,7 +101,7 @@ jobs:
 
       - name: 上传测试报告
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-smoke-report-${{ github.sha }}
           path: web/playwright-report/
